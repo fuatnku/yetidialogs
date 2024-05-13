@@ -59,7 +59,12 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                 <button onClick={handleLanguageToggle}>{language.toUpperCase()}</button>
                 <span>ID: {id}</span>
             </div>
-            <Handle type="target" position={Position.Left} id="left-handle"/>
+            <Handle
+                type="target"
+                position={Position.Left}
+                id="left-handle"
+                style={{ background:'gray',left: -10, width: 20, height: 20,top: '50%', transform: 'translateY(-50%)' }}
+            />
             <div className="node-content">
                 <div className="node-question" onClick={() => startEdit(-1, question)}>
                     {question}
@@ -71,7 +76,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                             type="source"
                             position={Position.Right}
                             id={`choice-${index}`} // Benzersiz ID
-                            style={{ top: '50%', transform: 'translateY(-50%)' }}
+                            style={{ background:'gray', width: 20, height: 20,top: '50%', transform: 'translateY(-50%)' }}
                         />
                     </div>
                 ))}

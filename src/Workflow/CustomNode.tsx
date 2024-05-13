@@ -5,10 +5,11 @@ import { Node } from './CustomNodeTypes';
 import './custom-node.css';
 
 interface CustomNodeComponentProps {
+    id: string;  // Node ID'sini props olarak ekleyin
     data: Node;
 }
 
-const CustomNode: React.FC<CustomNodeComponentProps> = ({ data }) => {
+const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
     const [language, setLanguage] = useState('en');
     const [question, setQuestion] = useState(data.question?.en || "Here, enter a question");
     const [answers, setAnswers] = useState(data.answers || []);
@@ -55,10 +56,10 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ data }) => {
     return (
         <div className="custom-node">
             <div className="node-header">
-                <span>Node Title</span>
                 <button onClick={handleLanguageToggle}>{language.toUpperCase()}</button>
+                <span>ID: {id}</span>
             </div>
-            <Handle type="target" position={Position.Left} id="left-handle" />
+            <Handle type="target" position={Position.Left} id="left-handle"/>
             <div className="node-content">
                 <div className="node-question" onClick={() => startEdit(-1, question)}>
                     {question}
@@ -76,6 +77,13 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ data }) => {
                 ))}
                 <button onClick={addAnswer}>Add Answer</button>
             </div>
+            {editing && (
+                <div className="edit-controls">
+                    <input type="text" value={editValue} onChange={(e) => setEditValue(e.target.value)} />
+                    <button onClick={applyEdit}>✔️</button>
+                    <button onClick={cancelEdit}>❌</button>
+                </div>
+            )}
             <Handle type="source" position={Position.Bottom} id="bottom-handle" style={{ visibility: 'hidden' }} />
         </div>
     );

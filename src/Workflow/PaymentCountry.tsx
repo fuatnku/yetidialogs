@@ -42,7 +42,7 @@ export default function PaymentCountry({
             );
             loadedNodes=JSON.stringify(updatednodes);
             console.log(loadedNodes);
-            localStorage.setItem('workflowNodes', loadedNodes);
+            localStorage.setItem('workflowNodes1', loadedNodes);
         }
     }
     const handleCancel = () => {

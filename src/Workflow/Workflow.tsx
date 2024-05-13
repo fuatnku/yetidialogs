@@ -28,6 +28,14 @@ const nodeTypes = {
     paymentProviderSelect: PaymentProviderSelect,
 };
 
+function checkDetails(setNodes: (value: (((prevState: Node<any, string | undefined>[]) => Node<any, string | undefined>[]) | Node<any, string | undefined>[])) => void) {
+    const checkDetails = localStorage.getItem('workflowNodes1');
+    if (checkDetails) {
+        localStorage.removeItem('workflowNodes1');
+        setNodes(JSON.parse(checkDetails));
+    }
+}
+
 export const Workflow = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState();
     const [edges, setEdges, onEdgesChange] = useEdgesState();
@@ -46,10 +54,8 @@ export const Workflow = () => {
             try {
                 const parsedNodes = JSON.parse(loadedNodes);
                 const parsedEdges = JSON.parse(loadedEdges);
-                console.log(loadedNodes);
                 setNodes(parsedNodes);
                 setEdges(parsedEdges);
-                console.log('Loaded nodes and edges from localStorage');
             } catch (error) {
                 console.error("Parsing error: ", error);
                 // Burada hata yönetimi yapabilirsiniz, örneğin default değerlere geri dönme vs.
@@ -59,9 +65,11 @@ export const Workflow = () => {
 
     // nodes ve edges değiştiğinde localStorage'a kaydedin
     useEffect(() => {
+        checkDetails(setNodes);
+
         localStorage.setItem('workflowNodes', JSON.stringify(nodes));
         localStorage.setItem('workflowEdges', JSON.stringify(edges));
-    }, [nodes, edges]);
+    }, [nodes,edges]);
 
     const onConnect = useCallback(
         (connection: Connection) => {

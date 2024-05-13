@@ -10,13 +10,18 @@ interface CustomNodeComponentProps {
 
 const CustomNode: React.FC<CustomNodeComponentProps> = ({ data }) => {
     const [language, setLanguage] = useState('en');
-    const [question, setQuestion] = useState(data.question?.[language] || "Buraya soru girin");
+    const [question, setQuestion] = useState(data.question?.en || "Here, enter a question");
     const [answers, setAnswers] = useState(data.answers || []);
     const [editing, setEditing] = useState(false);
     const [editValue, setEditValue] = useState('');
+    const [editingIndex, setEditingIndex] = useState(-1);
 
     const handleLanguageToggle = () => {
-        setLanguage((prev) => (prev === 'en' ? 'tr' : 'en'));
+        setLanguage(prev => {
+            const newLanguage = prev === 'en' ? 'tr' : 'en';
+            setQuestion(data.question ? data.question[newLanguage] : "Here, enter a question");
+            return newLanguage;
+        });
     };
 
     const addAnswer = () => {
@@ -24,24 +29,27 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ data }) => {
         setAnswers([...answers, newAnswer]);
     };
 
-    const editAnswer = (index: number, value: string) => {
-        const newAnswers = [...answers];
-        newAnswers[index].text[language] = value;
-        setAnswers(newAnswers);
-    };
-
-    const startEdit = (value: string) => {
+    const startEdit = (index: number, value: string) => {
         setEditing(true);
         setEditValue(value);
+        setEditingIndex(index);
     };
 
     const applyEdit = () => {
+        if (editingIndex >= 0) {
+            const newAnswers = [...answers];
+            newAnswers[editingIndex].text[language] = editValue;
+            setAnswers(newAnswers);
+        } else {
+            setQuestion(editValue);
+        }
         setEditing(false);
-        setQuestion(editValue);
+        setEditingIndex(-1);
     };
 
     const cancelEdit = () => {
         setEditing(false);
+        setEditingIndex(-1);
     };
 
     return (
@@ -50,26 +58,25 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ data }) => {
                 <span>Node Title</span>
                 <button onClick={handleLanguageToggle}>{language.toUpperCase()}</button>
             </div>
-            <Handle type="target" position={Position.Top} />
+            <Handle type="target" position={Position.Left} id="left-handle" />
             <div className="node-content">
-                <div className="node-question" onClick={() => startEdit(question)}>
+                <div className="node-question" onClick={() => startEdit(-1, question)}>
                     {question}
                 </div>
                 {answers.map((answer, index) => (
-                    <div key={index} className="node-answer" onClick={() => startEdit(answer.text[language])}>
+                    <div key={index} className="node-answer" onClick={() => startEdit(index, answer.text[language])} style={{ position: 'relative' }}>
                         {answer.text[language]}
+                        <Handle
+                            type="source"
+                            position={Position.Right}
+                            id={`choice-${index}`} // Benzersiz ID
+                            style={{ top: '50%', transform: 'translateY(-50%)' }}
+                        />
                     </div>
                 ))}
-                <button onClick={addAnswer}>Cevap Ekle</button>
+                <button onClick={addAnswer}>Add Answer</button>
             </div>
-            {editing && (
-                <div className="edit-controls">
-                    <input type="text" value={editValue} onChange={(e) => setEditValue(e.target.value)} />
-                    <button onClick={applyEdit}>✔️</button>
-                    <button onClick={cancelEdit}>❌</button>
-                </div>
-            )}
-            <Handle type="source" position={Position.Bottom} />
+            <Handle type="source" position={Position.Bottom} id="bottom-handle" style={{ visibility: 'hidden' }} />
         </div>
     );
 };

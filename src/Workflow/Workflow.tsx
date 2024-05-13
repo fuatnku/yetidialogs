@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import ReactFlow, {
     addEdge,
     Background,
@@ -10,7 +10,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { Box, Button } from '@chakra-ui/react';
 import { initialEdges, initialNodes } from './Workflow.constants';
-import { saveAs } from 'file-saver';
+
 import DevTools from './Devtools';
 import './style.css';
 
@@ -23,41 +23,10 @@ const edgeTypes = {
 };
 
 const nodeTypes = {
-    customNode: CustomNode,
+    customNode: CustomNode,  // CustomNode bileşeni burada tanımlanmış
 };
 
-const defaultNodeData = {
-    question: {
-        en: "Enter your question",
-        tr: "Sorunuzu giriniz"
-    },
-    answers: [
-        {
-            text: {
-                en: "Answer 1",
-                tr: "Cevap 1"
-            },
-            connect: ''
-        },
-        {
-            text: {
-                en: "Answer 2",
-                tr: "Cevap 2"
-            },
-            connect: ''
-        }
-    ]
-};
-
-interface NodeData {
-    id: string;
-    type: string;
-    position: { x: number; y: number };
-    data: typeof defaultNodeData;
-    style: { border: string; padding: string; borderRadius: string };
-}
-
-function checkDetails(setNodes: (value: (((prevState: NodeData[]) => NodeData[]) | NodeData[])) => void) {
+function checkDetails(setNodes: (value: (((prevState: Node<any, string | undefined>[]) => Node<any, string | undefined>[]) | Node<any, string | undefined>[])) => void) {
     const checkDetails = localStorage.getItem('workflowNodes1');
     if (checkDetails) {
         localStorage.removeItem('workflowNodes1');
@@ -66,10 +35,16 @@ function checkDetails(setNodes: (value: (((prevState: NodeData[]) => NodeData[])
 }
 
 export const Workflow = () => {
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes as NodeData[]);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-    const [nextNodeId, setNextNodeId] = useState(5);
+    const [nodes, setNodes, onNodesChange] = useNodesState();
+    const [edges, setEdges, onEdgesChange] = useEdgesState();
 
+    const setCountry = useCallback((nodeId, newCountry) => {
+        setNodes(prevNodes => prevNodes.map(node =>
+            node.id === nodeId ? { ...node, data: { ...node.data, country: newCountry }} : node
+        ));
+    }, [setNodes]);
+
+    // LocalStorage'dan verileri yükleyin
     useEffect(() => {
         const loadedNodes = localStorage.getItem('workflowNodes');
         const loadedEdges = localStorage.getItem('workflowEdges');
@@ -81,10 +56,12 @@ export const Workflow = () => {
                 setEdges(parsedEdges);
             } catch (error) {
                 console.error("Parsing error: ", error);
+                // Burada hata yönetimi yapabilirsiniz, örneğin default değerlere geri dönme vs.
             }
         }
     }, []);
 
+    // nodes ve edges değiştiğinde localStorage'a kaydedin
     useEffect(() => {
         checkDetails(setNodes);
 
@@ -92,17 +69,6 @@ export const Workflow = () => {
         localStorage.setItem('workflowEdges', JSON.stringify(edges));
     }, [nodes,edges]);
 
-    const handleAddNode = () => {
-        const newNode = {
-            id: `${nextNodeId}`,
-            type: 'customNode',
-            position: { x: 100, y: 100 },
-            data: defaultNodeData,
-            style: { border: '1px solid #ccc', padding: '10px', borderRadius: '2px' },
-        };
-        setNodes((prevNodes) => [...prevNodes, newNode]);
-        setNextNodeId(prevId => prevId + 1);
-    };
     const onConnect = useCallback(
         (connection: Connection) => {
             const edge = {
@@ -123,20 +89,23 @@ export const Workflow = () => {
     }, [nodes, edges]);
 
     const newDiagram = useCallback(() => {
-        setNodes(initialNodes as NodeData[]);
+        setNodes(initialNodes);
         setEdges(initialEdges);
     }, [setNodes, setEdges]);
 
+    const handleCountryChange = useCallback((nodeId, newCountry) => {
+        setNodes(prevNodes => prevNodes.map(node =>
+            node.id === nodeId ? { ...node, data: { ...node.data, country: newCountry }} : node
+        ));
+    }, []);
+
     return (
-    <Box height={'90vh'} width={'100vw'}>
+        <Box height={'100vh'} width={'100vw'}>
             <Button onClick={handleDownload} m={4}>
                 Download JSON
             </Button>
             <Button onClick={newDiagram} m={4}>
                 New
-            </Button>
-            <Button onClick={handleAddNode} m={4}>
-                Add Node
             </Button>
             <ReactFlow
                 nodes={nodes}
@@ -146,7 +115,6 @@ export const Workflow = () => {
                 onConnect={onConnect}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
-                draggable={false}
                 fitView
             >
                 <DevTools />

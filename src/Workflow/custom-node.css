@@ -11,12 +11,12 @@
 .node-header {
     display: flex;
     justify-content: space-between;
-    font-size: 0.55rem;
+    font-size: 0.75rem;
     margin-bottom: 10px;
 }
 
 .node-content {
-    margin: 2px 0;
+    margin: 5px 0;
 }
 
 .node-question, .node-answer {

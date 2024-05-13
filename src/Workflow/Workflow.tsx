@@ -10,6 +10,9 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { Box, Button } from '@chakra-ui/react';
 import { initialEdges, initialNodes } from './Workflow.constants';
+import { saveAs } from 'file-saver';
+import DevTools from './Devtools';
+import './style.css';
 
 // CustomNode ve CustomEdge importları
 import CustomNode from './CustomNode';
@@ -20,7 +23,7 @@ const edgeTypes = {
 };
 
 const nodeTypes = {
-    customNode: CustomNode,  // CustomNode bileşeni burada tanımlanmış
+    customNode: CustomNode,
 };
 
 const defaultNodeData = {
@@ -46,7 +49,15 @@ const defaultNodeData = {
     ]
 };
 
-function checkDetails(setNodes: (value: (((prevState: Node<any, string | undefined>[]) => Node<any, string | undefined>[]) | Node<any, string | undefined>[])) => void) {
+interface NodeData {
+    id: string;
+    type: string;
+    position: { x: number; y: number };
+    data: typeof defaultNodeData;
+    style: { border: string; padding: string; borderRadius: string };
+}
+
+function checkDetails(setNodes: (value: (((prevState: NodeData[]) => NodeData[]) | NodeData[])) => void) {
     const checkDetails = localStorage.getItem('workflowNodes1');
     if (checkDetails) {
         localStorage.removeItem('workflowNodes1');
@@ -55,12 +66,10 @@ function checkDetails(setNodes: (value: (((prevState: Node<any, string | undefin
 }
 
 export const Workflow = () => {
-    const [nodes, setNodes, onNodesChange] = useNodesState();
-    const [edges, setEdges, onEdgesChange] = useEdgesState();
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes as NodeData[]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [nextNodeId, setNextNodeId] = useState(5);
 
-
-    // LocalStorage'dan verileri yükleyin
     useEffect(() => {
         const loadedNodes = localStorage.getItem('workflowNodes');
         const loadedEdges = localStorage.getItem('workflowEdges');
@@ -72,12 +81,10 @@ export const Workflow = () => {
                 setEdges(parsedEdges);
             } catch (error) {
                 console.error("Parsing error: ", error);
-                // Burada hata yönetimi yapabilirsiniz, örneğin default değerlere geri dönme vs.
             }
         }
     }, []);
 
-    // nodes ve edges değiştiğinde localStorage'a kaydedin
     useEffect(() => {
         checkDetails(setNodes);
 
@@ -90,7 +97,8 @@ export const Workflow = () => {
             id: `${nextNodeId}`,
             type: 'customNode',
             position: { x: 100, y: 100 },
-            data: defaultNodeData
+            data: defaultNodeData,
+            style: { border: '1px solid #ccc', padding: '10px', borderRadius: '2px' },
         };
         setNodes((prevNodes) => [...prevNodes, newNode]);
         setNextNodeId(prevId => prevId + 1);
@@ -115,18 +123,12 @@ export const Workflow = () => {
     }, [nodes, edges]);
 
     const newDiagram = useCallback(() => {
-        setNodes(initialNodes);
+        setNodes(initialNodes as NodeData[]);
         setEdges(initialEdges);
     }, [setNodes, setEdges]);
 
-    const handleCountryChange = useCallback((nodeId, newCountry) => {
-        setNodes(prevNodes => prevNodes.map(node =>
-            node.id === nodeId ? { ...node, data: { ...node.data, country: newCountry }} : node
-        ));
-    }, []);
-
     return (
-        <Box height={'90vh'} width={'100vw'}>
+    <Box height={'90vh'} width={'100vw'}>
             <Button onClick={handleDownload} m={4}>
                 Download JSON
             </Button>
@@ -144,8 +146,11 @@ export const Workflow = () => {
                 onConnect={onConnect}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
+                draggable={false}
                 fitView
             >
+                <DevTools />
+
                 <Background />
                 <Controls />
             </ReactFlow>

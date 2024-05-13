@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { Handle, Position } from 'reactflow';
 import { Node } from './CustomNodeTypes';
 import './custom-node.css';
+import {Resizable, ResizableBox} from 'react-resizable';
+import 'react-resizable/css/styles.css';
 
 interface CustomNodeComponentProps {
     id: string;  // Node ID'sini props olarak ekleyin
@@ -16,6 +18,14 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
     const [editing, setEditing] = useState(false);
     const [editValue, setEditValue] = useState('');
     const [editingIndex, setEditingIndex] = useState(-1);
+    const [width, setWidth] = useState(300); // Başlangıç genişliği
+    const [height, setHeight] = useState(150); // Başlangıç yüksekliği
+
+    // Yeniden boyutlandırma işlemi tamamlandığında çalışacak fonksiyon
+    const onResizeStop = (event, { size }) => {
+        setWidth(size.width);
+        setHeight(size.height);
+    };
 
     const handleLanguageToggle = () => {
         setLanguage(prev => {
@@ -54,6 +64,11 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
     };
 
     return (
+        <ResizableBox
+            width={width}
+            height={height}
+            minConstraints={[300, 100]}
+            onResizeStop={onResizeStop}>
         <div className="custom-node">
             <div className="node-header">
                 <button onClick={handleLanguageToggle}>{language.toUpperCase()}</button>
@@ -63,20 +78,34 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                 type="target"
                 position={Position.Left}
                 id="left-handle"
-                style={{ background:'gray',left: -10, width: 20, height: 20,top: '50%', transform: 'translateY(-50%)' }}
+                style={{
+                    background: 'gray',
+                    left: -10,
+                    width: 20,
+                    height: 20,
+                    top: '50%',
+                    transform: 'translateY(-50%)'
+                }}
             />
             <div className="node-content">
-                <div className="node-question" onClick={() => startEdit(-1, question)}>
-                    {question}
+                <div className="node-question" onClick={() => startEdit(-1, question[language])}>
+                    <textarea value={question[language]} onChange={(e) => setEditValue(e.target.value)}/>
                 </div>
                 {answers.map((answer, index) => (
-                    <div key={index} className="node-answer" onClick={() => startEdit(index, answer.text[language])} style={{ position: 'relative' }}>
+                    <div key={index} className="node-answer" onClick={() => startEdit(index, answer.text[language])}
+                         style={{position: 'relative'}}>
                         {answer.text[language]}
                         <Handle
                             type="source"
                             position={Position.Right}
                             id={`choice-${index}`} // Benzersiz ID
-                            style={{ background:'gray', width: 20, height: 20,top: '50%', transform: 'translateY(-50%)' }}
+                            style={{
+                                background: 'gray',
+                                width: 20,
+                                height: 20,
+                                top: '50%',
+                                transform: 'translateY(-50%)'
+                            }}
                         />
                     </div>
                 ))}
@@ -84,14 +113,15 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
             </div>
             {editing && (
                 <div className="edit-controls">
-                    <input type="text" value={editValue} onChange={(e) => setEditValue(e.target.value)} />
+                    <input type="text" value={editValue} onChange={(e) => setEditValue(e.target.value)}/>
                     <button onClick={applyEdit}>✔️</button>
                     <button onClick={cancelEdit}>❌</button>
                 </div>
             )}
-            <Handle type="source" position={Position.Bottom} id="bottom-handle" style={{ visibility: 'hidden' }} />
+            <Handle type="source" position={Position.Bottom} id="bottom-handle" style={{visibility: 'hidden'}}/>
         </div>
-    );
+        </ResizableBox>
+);
 };
 
 export default CustomNode;

@@ -10,22 +10,17 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { Box, Button } from '@chakra-ui/react';
 import { initialEdges, initialNodes } from './Workflow.constants';
-import PaymentInit from './PaymentInit';
-import PaymentCountry from './PaymentCountry';
-import PaymentProvider from './PaymentProvider';
-import PaymentProviderSelect from './PaymentProviderSelect';
+
+// CustomNode ve CustomEdge importları
+import CustomNode from './CustomNode';
 import CustomEdge from './CustomEdge';
-import { saveAs } from 'file-saver';
 
 const edgeTypes = {
     customEdge: CustomEdge,
 };
 
 const nodeTypes = {
-    paymentInit: PaymentInit,
-    paymentCountry: PaymentCountry,
-    paymentProvider: PaymentProvider,
-    paymentProviderSelect: PaymentProviderSelect,
+    customNode: CustomNode,  // CustomNode bileşeni burada tanımlanmış
 };
 
 function checkDetails(setNodes: (value: (((prevState: Node<any, string | undefined>[]) => Node<any, string | undefined>[]) | Node<any, string | undefined>[])) => void) {

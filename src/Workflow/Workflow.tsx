@@ -2,10 +2,11 @@ import React, { useEffect, useCallback } from 'react';
 import ReactFlow, {
     addEdge,
     Background,
-    Connection,
     Controls,
     useEdgesState,
     useNodesState,
+    Node,
+    Connection,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Box, Button } from '@chakra-ui/react';
@@ -24,6 +25,13 @@ const edgeTypes = {
 
 const nodeTypes = {
     customNode: CustomNode,  // CustomNode bileşeni burada tanımlanmış
+};
+
+const defaultNode = {
+    id: 'new-node',
+    type: 'customNode',
+    position: { x: 250, y: 5 },
+    data: { label: 'New Node' }
 };
 
 function checkDetails(setNodes: (value: (((prevState: Node<any, string | undefined>[]) => Node<any, string | undefined>[]) | Node<any, string | undefined>[])) => void) {
@@ -67,7 +75,7 @@ export const Workflow = () => {
 
         localStorage.setItem('workflowNodes', JSON.stringify(nodes));
         localStorage.setItem('workflowEdges', JSON.stringify(edges));
-    }, [nodes,edges]);
+    }, [nodes, edges]);
 
     const onConnect = useCallback(
         (connection: Connection) => {
@@ -99,6 +107,15 @@ export const Workflow = () => {
         ));
     }, []);
 
+    const addNewNode = useCallback(() => {
+        const newNode = {
+            ...defaultNode,
+            id: `${nodes.length + 1}`,
+            position: { x: Math.random() * 250, y: Math.random() * 250 }
+        };
+        setNodes((prevNodes) => [...prevNodes, newNode]);
+    }, [nodes, setNodes]);
+
     return (
         <Box height={'100vh'} width={'100vw'}>
             <Button onClick={handleDownload} m={4}>
@@ -106,6 +123,9 @@ export const Workflow = () => {
             </Button>
             <Button onClick={newDiagram} m={4}>
                 New
+            </Button>
+            <Button onClick={addNewNode} m={4}>
+                Add Node
             </Button>
             <ReactFlow
                 nodes={nodes}

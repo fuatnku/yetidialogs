@@ -54,6 +54,15 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
         setEditingIndex(null);
     };
 
+    const deleteAnswer = () => {
+        if (editingIndex !== null && editingIndex >= 0) {
+            const newAnswers = answers.filter((_, i) => i !== editingIndex);
+            setAnswers(newAnswers);
+            cancelEdit();
+            onDataChange(id, { ...data, answers: newAnswers });
+        }
+    };
+
     return (
         <div className="custom-node">
             <div className="node-header">
@@ -77,12 +86,15 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
                 {answers.map((answer, index) => (
                     <div key={index} className="node-answer-container">
                         {editing && editingIndex === index ? (
-                            <input
-                                type="text"
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                className="node-answer-edit"
-                            />
+                            <div className="node-answer-edit-container">
+                                <input
+                                    type="text"
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    className="node-answer-edit"
+                                />
+                                <button onClick={() => deleteAnswer()} className="delete-answer-button">🗑️</button>
+                            </div>
                         ) : (
                             <div
                                 className="node-answer"
@@ -100,12 +112,15 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
                         )}
                     </div>
                 ))}
-                <button onClick={addAnswer}>Add Answer</button>
+                <button onClick={addAnswer} className="add-answer-button">+</button>
             </div>
             {editing && (
                 <div className="edit-controls">
                     <button onClick={applyEdit}>✔️</button>
                     <button onClick={cancelEdit}>❌</button>
+                    {editingIndex !== null && editingIndex >= 0 && (
+                        <button onClick={deleteAnswer} className="delete-answer-button">-</button>
+                    )}
                 </div>
             )}
         </div>

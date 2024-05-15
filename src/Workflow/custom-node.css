@@ -13,25 +13,18 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
-    color: #ff0000;
-    font-size: 12px;
 }
 
 .node-content {
     margin-bottom: 10px;
 }
 
-.node-question {
+.node-question, .node-answer {
     padding: 5px;
     margin-bottom: 5px;
     border: 1px solid #ccc;
     border-radius: 3px;
-}
-.node-answer {
-    padding: 5px;
-    margin-bottom: 5px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
+    cursor: pointer;
 }
 
 .node-question-edit, .node-answer-edit {
@@ -40,6 +33,25 @@
     margin-bottom: 5px;
     border: 1px solid #ccc;
     border-radius: 3px;
+}
+
+.node-answer-edit-container {
+    display: flex;
+    align-items: center;
+}
+
+.delete-answer-button {
+    margin-left: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.add-answer-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
 }
 
 .edit-controls {

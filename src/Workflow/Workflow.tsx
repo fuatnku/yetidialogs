@@ -76,6 +76,8 @@ export const Workflow = () => {
 
         localStorage.setItem('workflowNodes', JSON.stringify(nodes));
         localStorage.setItem('workflowEdges', JSON.stringify(edges));
+        console.log("*** Nodes and edges saved to localStorage");
+        console.log("Nodes: ", nodes);
     }, [nodes, edges]);
 
     const onConnect = useCallback(
@@ -102,12 +104,6 @@ export const Workflow = () => {
         setEdges(initialEdges);
     }, [setNodes, setEdges]);
 
-    const handleCountryChange = useCallback((nodeId, newCountry) => {
-        setNodes(prevNodes => prevNodes.map(node =>
-            node.id === nodeId ? { ...node, data: { ...node.data, country: newCountry }} : node
-        ));
-    }, []);
-
     const addNewNode = useCallback(() => {
         const newNode = {
             ...defaultNode,
@@ -118,10 +114,19 @@ export const Workflow = () => {
     }, [nodes, setNodes]);
 
     const handleNodeChange = useCallback((id, field, value) => {
+        console.log("Node change event: ", id, field, value);
+        console.log(JSON.stringify(nodes));
         setNodes(prevNodes => prevNodes.map(node =>
             node.id === id ? { ...node, data: { ...node.data, [field]: value }} : node
         ));
     }, [setNodes]);
+
+    const handleDataChange = useCallback((id, newData) => {
+        setNodes(prevNodes => prevNodes.map(node =>
+            node.id === id ? { ...node, data: { ...node.data, ...newData }} : node
+        ));
+    }, [setNodes]);
+
 
     return (
         <Box height={'100vh'} width={'100vw'}>
@@ -139,7 +144,9 @@ export const Workflow = () => {
                     ...node,
                     data: {
                         ...node.data,
-                        onChange: handleNodeChange
+                        id: node.id, // ID'yi explicit olarak geçin
+                        onDataChange: handleDataChange, // Bu fonksiyonu tanımlayın veya mevcut fonksiyonu kullanın
+                        onChange: handleNodeChange, // handleNodeChange fonksiyonunu doğrudan burada geçin
                     }
                 }))}
                 edges={edges}

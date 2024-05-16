@@ -26,6 +26,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
         const newAnswer = { text: { en: "New answer", tr: "Yeni cevap" }, connect: "" };
         const newAnswers = [...answers, newAnswer];
         setAnswers(newAnswers);
+        console.log('addAnswer onChange function:', onChange);
         onChange(id, 'answers', newAnswers);  // onChange eventini çağırın
     };
 

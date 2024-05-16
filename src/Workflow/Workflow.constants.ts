@@ -1,9 +1,9 @@
-import { Edge } from "reactflow";
-import CustomNode from "./CustomNode";
+import { Edge, Node } from 'reactflow';
+import { CustomNodeProps } from './CustomNodeTypes';  // CustomNodeProps'u import edin
 
 export const initialEdges: Edge[] = [];
 
-export const initialNodes: typeof CustomNode[] =  [
+export const initialNodes: Node<CustomNodeProps>[] = [
   {
     id: '1',
     type: 'customNode', // bu, nodeTypes'ta tanımladığınız özel node tipini kullanır

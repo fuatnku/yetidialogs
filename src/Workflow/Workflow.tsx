@@ -43,8 +43,8 @@ function checkDetails(setNodes: (value: (((prevState: Node<any, string | undefin
 }
 
 export const Workflow = () => {
-    const [nodes, setNodes, onNodesChange] = useNodesState();
-    const [edges, setEdges, onEdgesChange] = useEdgesState();
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
     const setCountry = useCallback((nodeId, newCountry) => {
         setNodes(prevNodes => prevNodes.map(node =>
@@ -58,6 +58,7 @@ export const Workflow = () => {
         const loadedEdges = localStorage.getItem('workflowEdges');
         if (loadedNodes && loadedEdges) {
             try {
+                console.log("Loaded nodes: ", loadedNodes);
                 const parsedNodes = JSON.parse(loadedNodes);
                 const parsedEdges = JSON.parse(loadedEdges);
                 setNodes(parsedNodes);
@@ -116,6 +117,12 @@ export const Workflow = () => {
         setNodes((prevNodes) => [...prevNodes, newNode]);
     }, [nodes, setNodes]);
 
+    const handleNodeChange = useCallback((id, field, value) => {
+        setNodes(prevNodes => prevNodes.map(node =>
+            node.id === id ? { ...node, data: { ...node.data, [field]: value }} : node
+        ));
+    }, [setNodes]);
+
     return (
         <Box height={'100vh'} width={'100vw'}>
             <Button onClick={handleDownload} m={4}>
@@ -128,7 +135,13 @@ export const Workflow = () => {
                 Add Node
             </Button>
             <ReactFlow
-                nodes={nodes}
+                nodes={nodes.map(node => ({
+                    ...node,
+                    data: {
+                        ...node.data,
+                        onChange: handleNodeChange
+                    }
+                }))}
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}

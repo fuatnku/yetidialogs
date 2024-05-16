@@ -7,9 +7,10 @@ interface CustomNodeComponentProps {
     id: string;  // Node ID'sini props olarak ekleyin
     data: Node;
     onDataChange: (id: string, newData: Node) => void;
+    onChange: (id: string, field: string, value: any) => void;  // onChange eventini props olarak ekleyin
 }
 
-const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange }) => {
+const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange, onChange }) => {
     const [language, setLanguage] = useState<'en' | 'tr'>('en');
     const [question, setQuestion] = useState(data.question || { en: "Here, enter a question", tr: "Buraya bir soru girin" });
     const [answers, setAnswers] = useState(data.answers || []);
@@ -25,7 +26,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
         const newAnswer = { text: { en: "New answer", tr: "Yeni cevap" }, connect: "" };
         const newAnswers = [...answers, newAnswer];
         setAnswers(newAnswers);
-        onDataChange(id, { ...data, answers: newAnswers });
+        onChange(id, 'answers', newAnswers);  // onChange eventini çağırın
     };
 
     const startEdit = (index: number | null, value: string) => {
@@ -40,11 +41,11 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
             const newAnswers = [...answers];
             newAnswers[editingIndex].text[language] = editValue;
             setAnswers(newAnswers);
-            onDataChange(id, { ...data, answers: newAnswers });
+            onChange(id, 'answers', newAnswers);  // onChange eventini çağırın
         } else if (editingIndex === null) {
             const newQuestion = { ...question, [language]: editValue };
             setQuestion(newQuestion);
-            onDataChange(id, { ...data, question: newQuestion });
+            onChange(id, 'question', newQuestion);  // onChange eventini çağırın
         }
         setEditingIndex(null);
     };
@@ -58,8 +59,8 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
         if (editingIndex !== null && editingIndex >= 0) {
             const newAnswers = answers.filter((_, i) => i !== editingIndex);
             setAnswers(newAnswers);
+            onChange(id, 'answers', newAnswers);  // onChange eventini çağırın
             cancelEdit();
-            onDataChange(id, { ...data, answers: newAnswers });
         }
     };
 

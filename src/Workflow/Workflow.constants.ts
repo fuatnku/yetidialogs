@@ -1,13 +1,52 @@
 import { Edge, Node } from 'reactflow';
 import { CustomNodeProps } from './CustomNodeTypes';  // CustomNodeProps'u import edin
 
-export const initialEdges: Edge[] = [];
+export const initialEdges: Edge[] = [
+      {
+        "source": "1",
+        "sourceHandle": "choice-0",
+        "target": "2",
+        "targetHandle": "left-handle",
+        "animated": true,
+        "id": "1",
+        "type": "customEdge"
+      },
+      {
+        "source": "1",
+        "sourceHandle": "choice-1",
+        "target": "3",
+        "targetHandle": "left-handle",
+        "animated": true,
+        "id": "2",
+        "type": "customEdge"
+      },
+      {
+        "source": "2",
+        "sourceHandle": "choice-0",
+        "target": "4",
+        "targetHandle": "left-handle",
+        "animated": true,
+        "id": "3",
+        "type": "customEdge"
+      },
+      {
+        "source": "3",
+        "sourceHandle": "choice-0",
+        "target": "4",
+        "targetHandle": "left-handle",
+        "animated": true,
+        "id": "4",
+        "type": "customEdge"
+      }
+    ]
+;
+
 
 export const initialNodes: Node<CustomNodeProps>[] = [
   {
     id: '1',
     type: 'customNode', // bu, nodeTypes'ta tanımladığınız özel node tipini kullanır
-    position: { x: 250, y: 5 },
+    position: { x: 0, y: 150 },
     data: {
       question: {
         en: "What is your favorite color?",
@@ -34,7 +73,7 @@ export const initialNodes: Node<CustomNodeProps>[] = [
   {
     id: '2',
     type: 'customNode',
-    position: { x: 100, y: 200 },
+    position: { x: 300, y: 0 },
     data: {
       question: {
         en: "Why do you like blue?",
@@ -54,7 +93,7 @@ export const initialNodes: Node<CustomNodeProps>[] = [
   {
     id: '3',
     type: 'customNode',
-    position: { x: 400, y: 200 },
+    position: { x: 300, y: 300 },
     data: {
       question: {
         en: "Why do you like red?",
@@ -74,7 +113,7 @@ export const initialNodes: Node<CustomNodeProps>[] = [
   {
     id: '4',
     type: 'customNode',
-    position: { x: 250, y: 400 },
+    position: { x: 640, y: 150 },
     data: {
       question: {
         en: "Would you like to learn more about colors?",

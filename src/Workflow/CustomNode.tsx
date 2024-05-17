@@ -26,7 +26,6 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
         const newAnswer = { text: { en: "New answer", tr: "Yeni cevap" }, connect: "" };
         const newAnswers = [...answers, newAnswer];
         setAnswers(newAnswers);
-        console.log('addAnswer onChange function:', onChange);
         onChange(id, 'answers', newAnswers);  // onChange eventini çağırın
     };
 
@@ -58,10 +57,10 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
 
     const deleteAnswer = () => {
         if (editingIndex !== null && editingIndex >= 0) {
+            setEditing(false);
             const newAnswers = answers.filter((_, i) => i !== editingIndex);
             setAnswers(newAnswers);
             onChange(id, 'answers', newAnswers);  // onChange eventini çağırın
-            cancelEdit();
         }
     };
 
@@ -74,11 +73,11 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
             <Handle type="target" position={Position.Left} id="left-handle" />
             <div className="node-content">
                 {editing && editingIndex === null ? (
-                    <input
-                        type="text"
+                    <textarea
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
                         className="node-question-edit"
+                        rows={4}  // Burada satır sayısını ayarlayabilirsiniz
                     />
                 ) : (
                     <div className="node-question" onDoubleClick={() => startEdit(null, question[language])}>
@@ -89,11 +88,11 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
                     <div key={index} className="node-answer-container">
                         {editing && editingIndex === index ? (
                             <div className="node-answer-edit-container">
-                                <input
-                                    type="text"
+                                <textarea
                                     value={editValue}
                                     onChange={(e) => setEditValue(e.target.value)}
                                     className="node-answer-edit"
+                                    rows={2}  // Burada satır sayısını ayarlayabilirsiniz
                                 />
                                 <button onClick={() => deleteAnswer()} className="delete-answer-button">🗑️</button>
                             </div>
@@ -114,15 +113,14 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
                         )}
                     </div>
                 ))}
-                <button onClick={addAnswer} className="add-answer-button">+</button>
+                {!editing && (
+                    <button onClick={addAnswer} className="add-answer-button">{language === "en" ? "Add Answer" : "Cevap Ekle"}</button>
+                )}
             </div>
             {editing && (
                 <div className="edit-controls">
                     <button onClick={applyEdit}>✔️</button>
                     <button onClick={cancelEdit}>❌</button>
-                    {editingIndex !== null && editingIndex >= 0 && (
-                        <button onClick={deleteAnswer} className="delete-answer-button">-</button>
-                    )}
                 </div>
             )}
         </div>

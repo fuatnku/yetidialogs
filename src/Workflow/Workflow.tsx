@@ -45,6 +45,7 @@ function checkDetails(setNodes: (value: (((prevState: Node<any, string | undefin
 export const Workflow = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [viewDevTools, setViewDevTools] = React.useState(false);
 
     const setCountry = useCallback((nodeId, newCountry) => {
         setNodes(prevNodes => prevNodes.map(node =>
@@ -96,7 +97,6 @@ export const Workflow = () => {
     const handleDownload = useCallback(() => {
         const data = JSON.stringify({ nodes, edges }, null, 2);
         const blob = new Blob([data], { type: 'application/json' });
-        saveAs(blob, 'workflow-data.json');
     }, [nodes, edges]);
 
     const newDiagram = useCallback(() => {
@@ -128,8 +128,12 @@ export const Workflow = () => {
     }, [setNodes]);
 
 
+    function toggleViewDevTools() {
+        setViewDevTools(!viewDevTools);
+    }
+
     return (
-        <Box height={'100vh'} width={'100vw'}>
+        <Box height={'90vh'} width={'100vw'}>
             <Button onClick={handleDownload} m={4}>
                 Download JSON
             </Button>
@@ -138,6 +142,9 @@ export const Workflow = () => {
             </Button>
             <Button onClick={addNewNode} m={4}>
                 Add Node
+            </Button>
+            <Button onClick={toggleViewDevTools} m={4}>
+                Debug
             </Button>
             <ReactFlow
                 nodes={nodes.map(node => ({
@@ -157,7 +164,7 @@ export const Workflow = () => {
                 edgeTypes={edgeTypes}
                 fitView
             >
-                <DevTools />
+                {viewDevTools&&<DevTools />}
 
                 <Background />
                 <Controls />

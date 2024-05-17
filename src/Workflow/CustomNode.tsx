@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Handle, Position, useOnSelectionChange } from 'reactflow';
+import { Handle, Position, useOnSelectionChange, NodeToolbar } from 'reactflow';
 import { Node } from './CustomNodeTypes';
 import './custom-node.css';
 
 interface CustomNodeComponentProps {
-    id: string;  // Node ID'sini props olarak ekleyin
+    id: string;
     data: Node;
     onDataChange: (id: string, newData: Node) => void;
-    onChange: (id: string, field: string, value: any) => void;  // onChange eventini props olarak ekleyin
+    onChange: (id: string, field: string, value: any) => void;
 }
 
 const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange, onChange }) => {
@@ -35,7 +35,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
         const newAnswer = { text: { en: "New answer", tr: "Yeni cevap" }, connect: "" };
         const newAnswers = [...answers, newAnswer];
         setAnswers(newAnswers);
-        onChange(id, 'answers', newAnswers);  // onChange eventini çağırın
+        onChange(id, 'answers', newAnswers);
     };
 
     const startEdit = (index: number | null, value: string) => {
@@ -50,11 +50,11 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
             const newAnswers = [...answers];
             newAnswers[editingIndex].text[language] = editValue;
             setAnswers(newAnswers);
-            onChange(id, 'answers', newAnswers);  // onChange eventini çağırın
+            onChange(id, 'answers', newAnswers);
         } else if (editingIndex === null) {
             const newQuestion = { ...question, [language]: editValue };
             setQuestion(newQuestion);
-            onChange(id, 'question', newQuestion);  // onChange eventini çağırın
+            onChange(id, 'question', newQuestion);
         }
         setEditingIndex(null);
     };
@@ -69,12 +69,15 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
             setEditing(false);
             const newAnswers = answers.filter((_, i) => i !== editingIndex);
             setAnswers(newAnswers);
-            onChange(id, 'answers', newAnswers);  // onChange eventini çağırın
+            onChange(id, 'answers', newAnswers);
         }
     };
 
     return (
         <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
+            <NodeToolbar>
+                <div className="drag-handle" />
+            </NodeToolbar>
             <div className="node-header">
                 <button onClick={handleLanguageToggle}>{language.toUpperCase()}</button>
                 <span>ID: {id}</span>
@@ -86,7 +89,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
                         className="node-question-edit"
-                        rows={4}  // Burada satır sayısını ayarlayabilirsiniz
+                        rows={4}
                     />
                 ) : (
                     <div className="node-question" onDoubleClick={() => startEdit(null, question[language])}>
@@ -101,7 +104,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
                                     value={editValue}
                                     onChange={(e) => setEditValue(e.target.value)}
                                     className="node-answer-edit"
-                                    rows={2}  // Burada satır sayısını ayarlayabilirsiniz
+                                    rows={2}
                                 />
                                 <button onClick={() => deleteAnswer()} className="delete-answer-button">🗑️</button>
                             </div>
@@ -115,7 +118,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
                                 <Handle
                                     type="source"
                                     position={Position.Right}
-                                    id={`choice-${index}`} // Benzersiz ID
+                                    id={`choice-${index}`}
                                     style={{ top: '50%', transform: 'translateY(-50%)' }}
                                 />
                             </div>

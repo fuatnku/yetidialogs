@@ -7,6 +7,7 @@ import ReactFlow, {
     useNodesState,
     Node,
     Connection,
+    NodeDragStopEvent,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Box, Button } from '@chakra-ui/react';
@@ -24,7 +25,7 @@ const edgeTypes = {
 };
 
 const nodeTypes = {
-    customNode: CustomNode,  // CustomNode bileşeni burada tanımlanmış
+    customNode: CustomNode,
 };
 
 const defaultNode = {
@@ -34,24 +35,10 @@ const defaultNode = {
     data: { label: 'New Node' }
 };
 
-function checkDetails(setNodes: (value: (((prevState: Node<any, string | undefined>[]) => Node<any, string | undefined>[]) | Node<any, string | undefined>[])) => void) {
-    const checkDetails = localStorage.getItem('workflowNodes1');
-    if (checkDetails) {
-        localStorage.removeItem('workflowNodes1');
-        setNodes(JSON.parse(checkDetails));
-    }
-}
-
 export const Workflow = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [viewDevTools, setViewDevTools] = React.useState(false);
-
-    const setCountry = useCallback((nodeId, newCountry) => {
-        setNodes(prevNodes => prevNodes.map(node =>
-            node.id === nodeId ? { ...node, data: { ...node.data, country: newCountry }} : node
-        ));
-    }, [setNodes]);
 
     // LocalStorage'dan verileri yükleyin
     useEffect(() => {
@@ -73,12 +60,6 @@ export const Workflow = () => {
 
     // nodes ve edges değiştiğinde localStorage'a kaydedin
     useEffect(() => {
-        checkDetails(setNodes);
-
-        localStorage.setItem('workflowNodes', JSON.stringify(nodes));
-        localStorage.setItem('workflowEdges', JSON.stringify(edges));
-        console.log("*** Nodes and edges saved to localStorage");
-        console.log("Nodes: ", nodes);
     }, [nodes, edges]);
 
     const onConnect = useCallback(
@@ -94,9 +75,29 @@ export const Workflow = () => {
         [edges, setEdges]
     );
 
+    const onNodeDragStop = useCallback(
+        (event: NodeDragStopEvent, node: Node) => {
+            const roundedPositions = nodes.map(n => ({
+                ...n,
+                position: { x: Math.round(n.position.x), y: Math.round(n.position.y) }
+            }));
+            setNodes(roundedPositions);
+            localStorage.setItem('workflowNodes', JSON.stringify(roundedPositions));
+            console.log("Nodes saved to localStorage after drag stop.");
+        },
+        [nodes, setNodes]
+    );
+
     const handleDownload = useCallback(() => {
         const data = JSON.stringify({ nodes, edges }, null, 2);
         const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'workflow.json';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }, [nodes, edges]);
 
     const newDiagram = useCallback(() => {
@@ -127,10 +128,16 @@ export const Workflow = () => {
         ));
     }, [setNodes]);
 
-
     function toggleViewDevTools() {
         setViewDevTools(!viewDevTools);
     }
+
+    function changeFirstNodeQuestion() {
+        const allNodes = nodes;
+        allNodes[0].data.question.en= "What is your name?";
+        allNodes[0].data.question.tr= "Adın neydi?";
+        setNodes(allNodes);
+    }[nodes, setNodes];
 
     return (
         <Box height={'90vh'} width={'100vw'}>
@@ -146,25 +153,29 @@ export const Workflow = () => {
             <Button onClick={toggleViewDevTools} m={4}>
                 Debug
             </Button>
+            <Button onClick={changeFirstNodeQuestion} m={4}>
+                Set Question
+            </Button>
             <ReactFlow
                 nodes={nodes.map(node => ({
                     ...node,
                     data: {
                         ...node.data,
-                        id: node.id, // ID'yi explicit olarak geçin
-                        onDataChange: handleDataChange, // Bu fonksiyonu tanımlayın veya mevcut fonksiyonu kullanın
-                        onChange: handleNodeChange, // handleNodeChange fonksiyonunu doğrudan burada geçin
+                        id: node.id,
+                        onDataChange: handleDataChange,
+                        onChange: handleNodeChange,
                     }
                 }))}
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
+                onNodeDragStop={onNodeDragStop}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 fitView
             >
-                {viewDevTools&&<DevTools />}
+                {viewDevTools && <DevTools />}
 
                 <Background />
                 <Controls />

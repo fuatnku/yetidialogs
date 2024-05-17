@@ -57,7 +57,7 @@
 .react-flow__devtools-nodeinspector {
     pointer-events: none;
     font-family: monospace, sans-serif;
-    font-size: 10px;
+    font-size: 8px;
 }
 
 .react-flow__devtools-nodeinfo {

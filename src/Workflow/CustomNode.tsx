@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position, useOnSelectionChange } from 'reactflow';
 import { Node } from './CustomNodeTypes';
 import './custom-node.css';
 
@@ -11,6 +11,15 @@ interface CustomNodeComponentProps {
 }
 
 const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange, onChange }) => {
+    const [isSelected, setIsSelected] = useState(false);
+
+    useOnSelectionChange({
+        onChange: ({ nodes }) => {
+            const isSelected = nodes.some(node => node.id === id);
+            setIsSelected(isSelected);
+        },
+    });
+
     const [language, setLanguage] = useState<'en' | 'tr'>('en');
     const [question, setQuestion] = useState(data.question || { en: "Here, enter a question", tr: "Buraya bir soru girin" });
     const [answers, setAnswers] = useState(data.answers || []);
@@ -65,7 +74,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
     };
 
     return (
-        <div className="custom-node">
+        <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
             <div className="node-header">
                 <button onClick={handleLanguageToggle}>{language.toUpperCase()}</button>
                 <span>ID: {id}</span>

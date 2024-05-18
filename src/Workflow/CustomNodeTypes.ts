@@ -6,6 +6,8 @@ export interface CustomNodeProps {
 }
 
 export interface Node extends ReactFlowNodeProps {
+    tr: string;
+    en: string;
     question?: TranslatedText;
     answers?: Answer[];
     condition?: Condition[];

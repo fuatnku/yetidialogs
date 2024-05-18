@@ -18,16 +18,18 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 4px;
+    margin-top: -4px;
     font-size: 10px;
+    background: #ecedf3;
 }
 
 .node-content {
-    margin-bottom: 10px;
+    margin-bottom: 2px;
 }
 
 .node-question, .node-answer {
-    padding: 5px;
+    padding: 2px;
     margin-bottom: 5px;
     border: 1px solid #ccc;
     border-radius: 3px;

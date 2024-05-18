@@ -12,11 +12,11 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { Box, Button } from '@chakra-ui/react';
 import { initialEdges, initialNodes } from './Workflow.constants';
-
 import DevTools from './Devtools';
 import './style.css';
+import TextUpdaterNode from './TextUpdaterNode';
+import './text-updater-node.css';
 
-// CustomNode ve CustomEdge importları
 import CustomNode from './CustomNode';
 import CustomEdge from './CustomEdge';
 
@@ -26,6 +26,7 @@ const edgeTypes = {
 
 const nodeTypes = {
     customNode: CustomNode,
+    textUpdaterNode: TextUpdaterNode,
 };
 
 const defaultNode = {
@@ -35,31 +36,36 @@ const defaultNode = {
     data: { label: 'New Node' }
 };
 
+const defaultNode2 = {
+    id: 'new-node',
+    type: 'textUpdaterNode',
+    position: { x: 250, y: 5 },
+    data: { label: 'New Node' }
+};
+
 export const Workflow = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [viewDevTools, setViewDevTools] = React.useState(false);
 
-    // LocalStorage'dan verileri yükleyin
     useEffect(() => {
         const loadedNodes = localStorage.getItem('workflowNodes');
         const loadedEdges = localStorage.getItem('workflowEdges');
         if (loadedNodes && loadedEdges) {
             try {
-                console.log("Loaded nodes: ", loadedNodes);
                 const parsedNodes = JSON.parse(loadedNodes);
                 const parsedEdges = JSON.parse(loadedEdges);
                 setNodes(parsedNodes);
                 setEdges(parsedEdges);
             } catch (error) {
                 console.error("Parsing error: ", error);
-                // Burada hata yönetimi yapabilirsiniz, örneğin default değerlere geri dönme vs.
             }
         }
     }, []);
 
-    // nodes ve edges değiştiğinde localStorage'a kaydedin
     useEffect(() => {
+        localStorage.setItem('workflowNodes', JSON.stringify(nodes));
+        localStorage.setItem('workflowEdges', JSON.stringify(edges));
     }, [nodes, edges]);
 
     const onConnect = useCallback(
@@ -83,7 +89,6 @@ export const Workflow = () => {
             }));
             setNodes(roundedPositions);
             localStorage.setItem('workflowNodes', JSON.stringify(roundedPositions));
-            console.log("Nodes saved to localStorage after drag stop.");
         },
         [nodes, setNodes]
     );
@@ -113,10 +118,16 @@ export const Workflow = () => {
         };
         setNodes((prevNodes) => [...prevNodes, newNode]);
     }, [nodes, setNodes]);
+    const addNewNode2 = useCallback(() => {
+        const newNode = {
+            ...defaultNode2,
+            id: `${nodes.length + 1}`,
+            position: { x: Math.random() * 250, y: Math.random() * 250 }
+        };
+        setNodes((prevNodes) => [...prevNodes, newNode]);
+    }, [nodes, setNodes]);
 
     const handleNodeChange = useCallback((id, field, value) => {
-        console.log("Node change event: ", id, field, value);
-        console.log(JSON.stringify(nodes));
         setNodes(prevNodes => prevNodes.map(node =>
             node.id === id ? { ...node, data: { ...node.data, [field]: value }} : node
         ));
@@ -128,34 +139,21 @@ export const Workflow = () => {
         ));
     }, [setNodes]);
 
-    function toggleViewDevTools() {
-        setViewDevTools(!viewDevTools);
-    }
-
-    function changeFirstNodeQuestion() {
-        const allNodes = nodes;
-        allNodes[0].data.question.en= "What is your name?";
-        allNodes[0].data.question.tr= "Adın neydi?";
+    const changeFirstNodeQuestion = useCallback(() => {
+        const allNodes = [...nodes];
+        allNodes[0].data.question.en = "Question changed";
+        allNodes[0].data.question.tr = "Soru değiştirildi";
         setNodes(allNodes);
-    }[nodes, setNodes];
+    }, [nodes, setNodes]);
 
     return (
         <Box height={'90vh'} width={'100vw'}>
-            <Button onClick={handleDownload} m={4}>
-                Download JSON
-            </Button>
-            <Button onClick={newDiagram} m={4}>
-                New
-            </Button>
-            <Button onClick={addNewNode} m={4}>
-                Add Node
-            </Button>
-            <Button onClick={toggleViewDevTools} m={4}>
-                Debug
-            </Button>
-            <Button onClick={changeFirstNodeQuestion} m={4}>
-                Set Question
-            </Button>
+            <Button onClick={handleDownload} m={4}>Download JSON</Button>
+            <Button onClick={newDiagram} m={4}>New</Button>
+            <Button onClick={addNewNode} m={4}>Add Node</Button>
+            <Button onClick={addNewNode2} m={4}>Add Node Type2</Button>
+            <Button onClick={() => setViewDevTools(!viewDevTools)} m={4}>Debug</Button>
+            <Button onClick={changeFirstNodeQuestion} m={4}>Set Question</Button>
             <ReactFlow
                 nodes={nodes.map(node => ({
                     ...node,
@@ -176,10 +174,11 @@ export const Workflow = () => {
                 fitView
             >
                 {viewDevTools && <DevTools />}
-
                 <Background />
                 <Controls />
             </ReactFlow>
         </Box>
     );
 };
+
+export default Workflow;

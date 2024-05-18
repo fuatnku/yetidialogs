@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Handle, Position, useOnSelectionChange, NodeToolbar } from 'reactflow';
+import { Handle, Position, useOnSelectionChange } from 'reactflow';
 import { Node } from './CustomNodeTypes';
 import './custom-node.css';
+
 
 interface CustomNodeComponentProps {
     id: string;
@@ -21,7 +22,10 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
     });
 
     const [language, setLanguage] = useState<'en' | 'tr'>('en');
-    const [question, setQuestion] = useState(data.question || { en: "Here, enter a question", tr: "Buraya bir soru girin" });
+    const [question, setQuestion] = useState(data.question || {
+        en: "Here, enter a question",
+        tr: "Buraya bir soru girin"
+    });
     const [answers, setAnswers] = useState(data.answers || []);
     const [editing, setEditing] = useState(false);
     const [editValue, setEditValue] = useState('');
@@ -35,7 +39,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
         const newAnswer = { text: { en: "New answer", tr: "Yeni cevap" }, connect: "" };
         const newAnswers = [...answers, newAnswer];
         setAnswers(newAnswers);
-        onChange(id, 'answers', newAnswers);
+        onDataChange(id, { ...data, answers: newAnswers });
     };
 
     const startEdit = (index: number | null, value: string) => {
@@ -50,7 +54,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
             const newAnswers = [...answers];
             newAnswers[editingIndex].text[language] = editValue;
             setAnswers(newAnswers);
-            onChange(id, 'answers', newAnswers);
+            onDataChange(id, { ...data, answers: newAnswers });
         } else if (editingIndex === null) {
             const newQuestion = { ...question, [language]: editValue };
             setQuestion(newQuestion);
@@ -75,9 +79,6 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
 
     return (
         <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
-            <NodeToolbar>
-                <div className="drag-handle" />
-            </NodeToolbar>
             <div className="node-header">
                 <button onClick={handleLanguageToggle}>{language.toUpperCase()}</button>
                 <span>ID: {id}</span>
@@ -106,7 +107,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
                                     className="node-answer-edit"
                                     rows={2}
                                 />
-                                <button onClick={() => deleteAnswer()} className="delete-answer-button">🗑️</button>
+                                <button onClick={deleteAnswer} className="delete-answer-button">🗑️</button>
                             </div>
                         ) : (
                             <div
@@ -126,7 +127,9 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
                     </div>
                 ))}
                 {!editing && (
-                    <button onClick={addAnswer} className="add-answer-button">{language === "en" ? "Add Answer" : "Cevap Ekle"}</button>
+                    <button onClick={addAnswer} className="add-answer-button">
+                        {language === "en" ? "Add Answer" : "Cevap Ekle"}
+                    </button>
                 )}
             </div>
             {editing && (

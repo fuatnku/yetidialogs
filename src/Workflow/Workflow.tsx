@@ -105,7 +105,8 @@ export const Workflow = () => {
             acc[node.id] = {
                 question: node.data.question,
                 answers: formattedAnswers,
-                condition: node.data.condition || []
+                condition: node.data.condition || [],
+                position: node.position
             };
             return acc;
         }, {});
@@ -128,10 +129,10 @@ export const Workflow = () => {
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result as string);
-                    const parsedNodes = Object.keys(data).map((key, index) => ({
+                    const parsedNodes = Object.keys(data).map((key) => ({
                         id: key,
                         type: 'customNode',
-                        position: { x: 100 + index * 50, y: 100 + index * 50 },
+                        position: data[key].position,
                         data: {
                             question: data[key].question,
                             answers: data[key].answers,
@@ -212,7 +213,6 @@ export const Workflow = () => {
             <Button onClick={handleDownload} m={4}>Download JSON</Button>
             <Button onClick={newDiagram} m={4}>New</Button>
             <Button onClick={addNewNode} m={4}>Add Node</Button>
-            <Button onClick={addNewNode2} m={4}>Add Node Type2</Button>
             <Button onClick={() => setViewDevTools(!viewDevTools)} m={4}>Debug</Button>
 
             <ReactFlow
@@ -232,6 +232,8 @@ export const Workflow = () => {
                 onNodeDragStop={onNodeDragStop}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
+                snapToGrid
+                snapGrid={[20, 20]}
                 fitView
             >
                 {viewDevTools && <DevTools/>}

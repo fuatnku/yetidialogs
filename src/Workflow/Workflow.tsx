@@ -94,7 +94,23 @@ export const Workflow = () => {
     );
 
     const handleDownload = useCallback(() => {
-        const data = JSON.stringify({ nodes, edges }, null, 2);
+        const nodeData = nodes.reduce((acc, node) => {
+            const formattedAnswers = node.data.answers?.map(answer => {
+                const connectedEdge = edges.find(edge => edge.source === node.id && edge.sourceHandle === `choice-${node.data.answers.indexOf(answer)}`);
+                return {
+                    text: answer.text,
+                    connect: connectedEdge ? connectedEdge.target : undefined
+                };
+            });
+            acc[node.id] = {
+                question: node.data.question,
+                answers: formattedAnswers,
+                condition: node.data.condition || []
+            };
+            return acc;
+        }, {});
+
+        const data = JSON.stringify(nodeData, null, 2);
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -118,6 +134,7 @@ export const Workflow = () => {
         };
         setNodes((prevNodes) => [...prevNodes, newNode]);
     }, [nodes, setNodes]);
+
     const addNewNode2 = useCallback(() => {
         const newNode = {
             ...defaultNode2,

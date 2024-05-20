@@ -3,7 +3,6 @@ import { Handle, Position, useOnSelectionChange } from 'reactflow';
 import { Node } from './CustomNodeTypes';
 import './custom-node.css';
 
-
 interface CustomNodeComponentProps {
     id: string;
     data: Node;
@@ -35,11 +34,14 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
         setLanguage(prev => (prev === 'en' ? 'tr' : 'en'));
     };
 
+    const showNodeDetails = () => {
+        alert(`ID: ${id}\nQuestion: ${JSON.stringify(question, null, 2)}\nAnswers: ${JSON.stringify(answers, null, 2)}`);
+    };
+
     const addAnswer = () => {
         const newAnswer = { text: { en: "New answer", tr: "Yeni cevap" }, connect: "" };
         const newAnswers = [...answers, newAnswer];
         setAnswers(newAnswers);
-        onDataChange(id, { ...data, answers: newAnswers });
     };
 
     const startEdit = (index: number | null, value: string) => {
@@ -54,11 +56,9 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
             const newAnswers = [...answers];
             newAnswers[editingIndex].text[language] = editValue;
             setAnswers(newAnswers);
-            onDataChange(id, { ...data, answers: newAnswers });
         } else if (editingIndex === null) {
             const newQuestion = { ...question, [language]: editValue };
             setQuestion(newQuestion);
-            onChange(id, 'question', newQuestion);
         }
         setEditingIndex(null);
     };
@@ -81,9 +81,10 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
         <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
             <div className="node-header">
                 <button onClick={handleLanguageToggle}>{language.toUpperCase()}</button>
+                <button onClick={showNodeDetails}>Show Details</button>
                 <span>ID: {id}</span>
             </div>
-            <Handle type="target" position={Position.Left} id="left-handle" />
+            <Handle type="target" position={Position.Left} id="left-handle"/>
             <div className="node-content">
                 {editing && editingIndex === null ? (
                     <textarea

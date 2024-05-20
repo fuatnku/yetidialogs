@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Handle, Position, useOnSelectionChange } from 'reactflow';
 import { Node } from './CustomNodeTypes';
 import './custom-node.css';
 
 interface CustomNodeComponentProps {
     id: string;
-    data: Node;
-    onDataChange: (id: string, newData: Node) => void;
-    onChange: (id: string, field: string, value: any) => void;
+    data: Node & {
+        id: string;
+        onChange: (id: string, field: string, value: any) => void;
+        onDataChange: (id: string, newData: any) => void;
+    };
 }
 
-const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange, onChange }) => {
+const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
     const [isSelected, setIsSelected] = useState(false);
 
     useOnSelectionChange({
@@ -30,6 +32,12 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
     const [editValue, setEditValue] = useState('');
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
+    useEffect(() => {
+        if (data.onDataChange) {
+            data.onDataChange(id, { question, answers });
+        }
+    }, [question, answers]);
+
     const handleLanguageToggle = () => {
         setLanguage(prev => (prev === 'en' ? 'tr' : 'en'));
     };
@@ -42,6 +50,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
         const newAnswer = { text: { en: "New answer", tr: "Yeni cevap" }, connect: "" };
         const newAnswers = [...answers, newAnswer];
         setAnswers(newAnswers);
+        data.onChange(id, 'answers', newAnswers);
     };
 
     const startEdit = (index: number | null, value: string) => {
@@ -56,9 +65,11 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
             const newAnswers = [...answers];
             newAnswers[editingIndex].text[language] = editValue;
             setAnswers(newAnswers);
+            data.onChange(id, 'answers', newAnswers);
         } else if (editingIndex === null) {
             const newQuestion = { ...question, [language]: editValue };
             setQuestion(newQuestion);
+            data.onChange(id, 'question', newQuestion);
         }
         setEditingIndex(null);
     };
@@ -73,7 +84,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data, onDataChange
             setEditing(false);
             const newAnswers = answers.filter((_, i) => i !== editingIndex);
             setAnswers(newAnswers);
-            onChange(id, 'answers', newAnswers);
+            data.onChange(id, 'answers', newAnswers);
         }
     };
 

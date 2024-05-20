@@ -5,11 +5,6 @@ import { useStoreState } from 'react-flow-renderer';
 
 
 function App() {
-  const [count, setCount] = useState(0);
-//  const elements = useStoreState((state) => state.elements);
-
-//  console.log(elements);
-
   return (
     <ChakraProvider>
       <Workflow />

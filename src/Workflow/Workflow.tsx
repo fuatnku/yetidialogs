@@ -177,8 +177,8 @@ export const Workflow = () => {
                     data: {
                         ...node.data,
                         id: node.id,
-                        onDataChange: handleDataChange,
                         onChange: handleNodeChange,
+                        onDataChange: handleDataChange,
                     }
                 }))}
                 edges={edges}

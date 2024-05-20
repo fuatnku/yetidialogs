@@ -121,6 +121,47 @@ export const Workflow = () => {
         document.body.removeChild(link);
     }, [nodes, edges]);
 
+    const handleUpload = useCallback((event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result as string);
+                    const parsedNodes = Object.keys(data).map((key, index) => ({
+                        id: key,
+                        type: 'customNode',
+                        position: { x: 100 + index * 50, y: 100 + index * 50 },
+                        data: {
+                            question: data[key].question,
+                            answers: data[key].answers,
+                            condition: data[key].condition
+                        }
+                    }));
+
+                    const parsedEdges = parsedNodes.flatMap((node) =>
+                        node.data.answers
+                            .filter((answer) => answer.connect)
+                            .map((answer, index) => ({
+                                id: `e${node.id}-${answer.connect}`,
+                                source: node.id,
+                                sourceHandle: `choice-${index}`,
+                                target: answer.connect,
+                                animated: true,
+                                type: 'customEdge'
+                            }))
+                    );
+
+                    setNodes(parsedNodes);
+                    setEdges(parsedEdges);
+                } catch (error) {
+                    console.error("File parsing error: ", error);
+                }
+            };
+            reader.readAsText(file);
+        }
+    }, [setNodes, setEdges]);
+
     const newDiagram = useCallback(() => {
         setNodes(initialNodes);
         setEdges(initialEdges);
@@ -156,21 +197,24 @@ export const Workflow = () => {
         ));
     }, [setNodes]);
 
-    const changeFirstNodeQuestion = useCallback(() => {
-        const allNodes = [...nodes];
-        allNodes[0].data.question.en = "Question changed";
-        allNodes[0].data.question.tr = "Soru değiştirildi";
-        setNodes(allNodes);
-    }, [nodes, setNodes]);
-
     return (
         <Box height={'90vh'} width={'100vw'}>
+            <input
+                type="file"
+                accept=".json"
+                onChange={handleUpload}
+                style={{display: 'none'}}
+                id="upload-json"
+            />
+            <label htmlFor="upload-json">
+                <Button as="span" m={4}>Upload JSON</Button>
+            </label>
             <Button onClick={handleDownload} m={4}>Download JSON</Button>
             <Button onClick={newDiagram} m={4}>New</Button>
             <Button onClick={addNewNode} m={4}>Add Node</Button>
             <Button onClick={addNewNode2} m={4}>Add Node Type2</Button>
             <Button onClick={() => setViewDevTools(!viewDevTools)} m={4}>Debug</Button>
-            <Button onClick={changeFirstNodeQuestion} m={4}>Set Question</Button>
+
             <ReactFlow
                 nodes={nodes.map(node => ({
                     ...node,
@@ -190,9 +234,9 @@ export const Workflow = () => {
                 edgeTypes={edgeTypes}
                 fitView
             >
-                {viewDevTools && <DevTools />}
-                <Background />
-                <Controls />
+                {viewDevTools && <DevTools/>}
+                <Background/>
+                <Controls/>
             </ReactFlow>
         </Box>
     );

@@ -58,6 +58,16 @@
 }
 
 .add-answer-button {
+    margin-left: 15px;
+    background: none;
+    border: none;
+    font-size: 12px;
+    font-style: italic;
+    cursor: pointer;
+}
+
+.set-random-order-button {
+    margin-left: 50px;
     background: none;
     border: none;
     font-size: 12px;

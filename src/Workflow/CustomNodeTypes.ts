@@ -10,7 +10,7 @@ export interface Node extends ReactFlowNodeProps {
     en: string;
     question?: TranslatedText;
     answers?: Answer[];
-    condition?: Condition[];
+    isRandomOrder?: RandomOrder;
 }
 
 export interface TranslatedText {
@@ -23,7 +23,6 @@ export interface Answer {
     connect?: string;
 }
 
-export interface Condition {
-    formula?: string;
-    connect: string;
+export interface RandomOrder {
+    isRandomOrder: boolean;
 }

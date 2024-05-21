@@ -28,22 +28,24 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
         tr: "Buraya bir soru girin"
     });
     const [answers, setAnswers] = useState(data.answers || []);
+    const [isRandomOrder, setIsRandomOrder] = useState(data.isRandomOrder || false);
+
     const [editing, setEditing] = useState(false);
     const [editValue, setEditValue] = useState('');
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
     useEffect(() => {
         if (data.onDataChange) {
-            data.onDataChange(id, { question, answers });
+            data.onDataChange(id, { question, answers,isRandomOrder });
         }
-    }, [question, answers]);
+    }, [question, answers, isRandomOrder]);
 
     const handleLanguageToggle = () => {
         setLanguage(prev => (prev === 'en' ? 'tr' : 'en'));
     };
 
     const showNodeDetails = () => {
-        alert(`ID: ${id}\nQuestion: ${JSON.stringify(question, null, 2)}\nAnswers: ${JSON.stringify(answers, null, 2)}`);
+        alert(`ID: ${id}\nQuestion: ${JSON.stringify(question, null, 2)}\nAnswers: ${JSON.stringify(answers, null, 2)}\nisRandomOrder: ${JSON.stringify(isRandomOrder, null, 2)}`);
     };
 
     const addAnswer = () => {
@@ -88,6 +90,11 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
         }
     };
 
+    function toggleRandomOrder(event: MouseEvent<HTMLButtonElement, MouseEvent>): void {
+        const orderStyle = !isRandomOrder;
+        setIsRandomOrder(orderStyle);
+    }
+
     return (
         <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
             <div className="node-header">
@@ -95,7 +102,13 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                 <button onClick={showNodeDetails}>?</button>
                 <span>ID: {id}</span>
             </div>
-            <Handle type="target" position={Position.Left} id="left-handle"/>
+            <Handle
+                type="target"
+                position={Position.Left}
+                id="left-handle"
+                style={{ background: 'gray',width:10,height:10,transform: 'translateX(-50%)' }}
+            />
+
             <div className="node-content">
                 {editing && editingIndex === null ? (
                     <textarea
@@ -125,14 +138,21 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                             <div
                                 className="node-answer"
                                 onDoubleClick={() => startEdit(index, answer.text[language])}
-                                style={{ position: 'relative' }}
+                                style={{position: 'relative'}}
                             >
                                 {answer.text[language]}
                                 <Handle
                                     type="source"
                                     position={Position.Right}
                                     id={`choice-${index}`}
-                                    style={{ top: '50%', transform: 'translateY(-50%)' }}
+                                    style={{
+                                        right: -10,
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        width: 10,
+                                        height: 10,
+                                        background: 'gray'
+                                    }}
                                 />
                             </div>
                         )}
@@ -142,6 +162,11 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                     <button onClick={addAnswer} className="add-answer-button">
                         {language === "en" ? "Add Answer" : "Cevap Ekle"}
                     </button>
+                )}
+                {!editing && (
+                <button onClick={toggleRandomOrder} className="set-random-order-button">
+                    {isRandomOrder ? "Random Order" : "Normal Order"}
+                </button>
                 )}
             </div>
             {editing && (

@@ -105,7 +105,7 @@ export const Workflow = () => {
             acc[node.id] = {
                 question: node.data.question,
                 answers: formattedAnswers,
-                condition: node.data.condition || [],
+                isRandomOrder: node.data.isRandomOrder || false,
                 position: node.position
             };
             return acc;
@@ -136,7 +136,7 @@ export const Workflow = () => {
                         data: {
                             question: data[key].question,
                             answers: data[key].answers,
-                            condition: data[key].condition
+                            isRandomOrder: data[key].isRandomOrder|| false,
                         }
                     }));
 

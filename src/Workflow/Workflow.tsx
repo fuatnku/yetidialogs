@@ -51,12 +51,17 @@ export const Workflow = () => {
     useEffect(() => {
         const loadedNodes = localStorage.getItem('workflowNodes');
         const loadedEdges = localStorage.getItem('workflowEdges');
+        console.log(loadedNodes);
         if (loadedNodes && loadedEdges) {
             try {
                 const parsedNodes = JSON.parse(loadedNodes);
                 const parsedEdges = JSON.parse(loadedEdges);
-                setNodes(parsedNodes);
-                setEdges(parsedEdges);
+                setNodes([]);
+                setEdges([]);
+                setTimeout(() => {
+                    setNodes(parsedNodes);
+                    setEdges(parsedEdges);
+                }, 0);
             } catch (error) {
                 console.error("Parsing error: ", error);
             }
@@ -64,6 +69,7 @@ export const Workflow = () => {
     }, []);
 
     useEffect(() => {
+        console.log('saving nodes', JSON.stringify(nodes));
         localStorage.setItem('workflowNodes', JSON.stringify(nodes));
         localStorage.setItem('workflowEdges', JSON.stringify(edges));
     }, [nodes, edges]);

@@ -92,7 +92,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
         <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
             <div className="node-header">
                 <button onClick={handleLanguageToggle}>{language.toUpperCase()}</button>
-                <button onClick={showNodeDetails}>Show Details</button>
+                <button onClick={showNodeDetails}>?</button>
                 <span>ID: {id}</span>
             </div>
             <Handle type="target" position={Position.Left} id="left-handle"/>

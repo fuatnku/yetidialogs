@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import ReactFlow, {
     addEdge,
     Background,
@@ -136,7 +136,7 @@ export const Workflow = () => {
                         data: {
                             question: data[key].question,
                             answers: data[key].answers,
-                            isRandomOrder: data[key].isRandomOrder|| false,
+                            isRandomOrder: data[key].isRandomOrder,
                         }
                     }));
 
@@ -153,8 +153,13 @@ export const Workflow = () => {
                             }))
                     );
 
-                    setNodes(parsedNodes);
-                    setEdges(parsedEdges);
+                    setNodes([]);
+                    setEdges([]);
+                    setTimeout(() => {
+                        setNodes(parsedNodes);
+                        setEdges(parsedEdges);
+                    }, 0);
+
                 } catch (error) {
                     console.error("File parsing error: ", error);
                 }
@@ -164,8 +169,12 @@ export const Workflow = () => {
     }, [setNodes, setEdges]);
 
     const newDiagram = useCallback(() => {
-        setNodes(initialNodes);
-        setEdges(initialEdges);
+        setNodes([]);
+        setEdges([]);
+        setTimeout(() => {
+            setNodes(initialNodes);
+            setEdges(initialEdges);
+        }, 0);
     }, [setNodes, setEdges]);
 
     const addNewNode = useCallback(() => {

@@ -48,10 +48,46 @@ export const Workflow = () => {
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [viewDevTools, setViewDevTools] = React.useState(false);
 
+    const [history, setHistory] = useState([{ nodes: initialNodes, edges: initialEdges }]);
+    const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
+
+    const applyChanges = (newNodes, newEdges) => {
+        const newHistory = history.slice(0, currentHistoryIndex + 1); // Mevcut indeksten sonraki geçmişi temizle
+        newHistory.push({ nodes: newNodes, edges: newEdges });
+        setHistory(newHistory);
+        setCurrentHistoryIndex(newHistory.length - 1);
+    };
+
+    const undo = () => {
+        if (currentHistoryIndex > 0) {
+            setCurrentHistoryIndex(currentHistoryIndex - 1);
+            const historyState = history[currentHistoryIndex - 1];
+            setNodes([]);
+            setEdges([]);
+            setTimeout(() => {
+                setNodes(historyState.nodes);
+                setEdges(historyState.edges);
+            }, 0);
+        }
+    };
+
+    const redo = () => {
+        if (currentHistoryIndex < history.length - 1) {
+            setCurrentHistoryIndex(currentHistoryIndex + 1);
+            const historyState = history[currentHistoryIndex + 1];
+            setNodes([]);
+            setEdges([]);
+            setTimeout(() => {
+                setNodes(historyState.nodes);
+                setEdges(historyState.edges);
+            }, 0);
+        }
+    };
+
+
     useEffect(() => {
         const loadedNodes = localStorage.getItem('workflowNodes');
         const loadedEdges = localStorage.getItem('workflowEdges');
-        console.log(loadedNodes);
         if (loadedNodes && loadedEdges) {
             try {
                 const parsedNodes = JSON.parse(loadedNodes);
@@ -62,6 +98,7 @@ export const Workflow = () => {
                     setNodes(parsedNodes);
                     setEdges(parsedEdges);
                 }, 0);
+                applyChanges(parsedNodes, parsedEdges);
             } catch (error) {
                 console.error("Parsing error: ", error);
             }
@@ -69,7 +106,6 @@ export const Workflow = () => {
     }, []);
 
     useEffect(() => {
-        console.log('saving nodes', JSON.stringify(nodes));
         localStorage.setItem('workflowNodes', JSON.stringify(nodes));
         localStorage.setItem('workflowEdges', JSON.stringify(edges));
     }, [nodes, edges]);
@@ -94,6 +130,7 @@ export const Workflow = () => {
                 position: { x: Math.round(n.position.x), y: Math.round(n.position.y) }
             }));
             setNodes(roundedPositions);
+            applyChanges(roundedPositions, edges);
             localStorage.setItem('workflowNodes', JSON.stringify(roundedPositions));
         },
         [nodes, setNodes]
@@ -175,12 +212,14 @@ export const Workflow = () => {
     }, [setNodes, setEdges]);
 
     const newDiagram = useCallback(() => {
-        setNodes([]);
-        setEdges([]);
-        setTimeout(() => {
-            setNodes(initialNodes);
-            setEdges(initialEdges);
-        }, 0);
+        if (window.confirm('Are you sure you want to start a new diagram? This will erase the current diagram.')) {
+            setNodes([]);
+            setEdges([]);
+            setTimeout(() => {
+                setNodes(initialNodes);
+                setEdges(initialEdges);
+            }, 0);
+        }
     }, [setNodes, setEdges]);
 
     const addNewNode = useCallback(() => {
@@ -205,12 +244,16 @@ export const Workflow = () => {
         setNodes(prevNodes => prevNodes.map(node =>
             node.id === id ? { ...node, data: { ...node.data, [field]: value }} : node
         ));
+//        applyChanges(nodes, edges);
+        console.log('handleNodeChange applied changes');
     }, [setNodes]);
 
     const handleDataChange = useCallback((id, newData) => {
         setNodes(prevNodes => prevNodes.map(node =>
             node.id === id ? { ...node, data: { ...node.data, ...newData }} : node
         ));
+//        applyChanges(nodes, edges);
+        console.log('handleDataChange applied changes');
     }, [setNodes]);
 
     return (
@@ -229,7 +272,9 @@ export const Workflow = () => {
             <Button onClick={newDiagram} m={4}>New</Button>
             <Button onClick={addNewNode} m={4}>Add Node</Button>
             <Button onClick={() => setViewDevTools(!viewDevTools)} m={4}>Debug</Button>
-
+            <Button onClick={undo} m={4}>Undo</Button>
+            <Button onClick={redo} m={4}>Redo</Button>
+            <label htmlFor="upload-json">Undo position: {currentHistoryIndex} / Undo length:{history.length-1}</label>
             <ReactFlow
                 nodes={nodes.map(node => ({
                     ...node,

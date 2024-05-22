@@ -229,6 +229,7 @@ export const Workflow = () => {
             position: { x: Math.random() * 250, y: Math.random() * 250 }
         };
         setNodes((prevNodes) => [...prevNodes, newNode]);
+        applyChanges(nodes, edges);
     }, [nodes, setNodes]);
 
     const addNewNode2 = useCallback(() => {
@@ -256,8 +257,18 @@ export const Workflow = () => {
         console.log('handleDataChange applied changes');
     }, [setNodes]);
 
+    function redraw() {
+        setNodes([]);
+        setEdges([]);
+        setTimeout(() => {
+            setNodes(nodes);
+            setEdges(edges);
+        }, 0);
+    }
+
     return (
         <Box height={'90vh'} width={'100vw'}>
+            <Button onClick={redraw} m={2}>Redraw</Button>
             <input
                 type="file"
                 accept=".json"
@@ -266,15 +277,15 @@ export const Workflow = () => {
                 id="upload-json"
             />
             <label htmlFor="upload-json">
-                <Button as="span" m={4}>Upload JSON</Button>
+                <Button as="span" m={2}>Upload JSON</Button>
             </label>
-            <Button onClick={handleDownload} m={4}>Download JSON</Button>
-            <Button onClick={newDiagram} m={4}>New</Button>
-            <Button onClick={addNewNode} m={4}>Add Node</Button>
+            <Button onClick={handleDownload} >Download JSON</Button>
+            <Button onClick={newDiagram} m={2}>New</Button>
+            <Button onClick={addNewNode} m={2}>Add Node</Button>
             <Button onClick={() => setViewDevTools(!viewDevTools)} m={4}>Debug</Button>
-            <Button onClick={undo} m={4}>Undo</Button>
-            <Button onClick={redo} m={4}>Redo</Button>
-            <label htmlFor="upload-json">Undo position: {currentHistoryIndex} / Undo length:{history.length-1}</label>
+            <Button onClick={undo} m={2}>Undo</Button>
+            <Button onClick={redo} m={2}>Redo</Button>
+            <label>Undo position: {currentHistoryIndex} / length:{history.length-1}</label>
             <ReactFlow
                 nodes={nodes.map(node => ({
                     ...node,

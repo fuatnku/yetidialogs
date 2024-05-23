@@ -84,7 +84,6 @@ export const Workflow = () => {
         }
     };
 
-
     useEffect(() => {
         const loadedNodes = localStorage.getItem('workflowNodes');
         const loadedEdges = localStorage.getItem('workflowEdges');
@@ -126,10 +125,33 @@ export const Workflow = () => {
                     type: 'customEdge',
                 };
 
+                // Kaynak düğümün answers alanındaki connect key'ini güncelle
+                setNodes((prevNodes) => {
+                    return prevNodes.map(node => {
+                        if (node.id === connection.source) {
+                            const updatedAnswers = node.data.answers.map((answer, index) => {
+                                if (`choice-${index}` === connection.sourceHandle) {
+                                    return { ...answer, connect: connection.target };
+                                }
+                                return answer;
+                            });
+                            return {
+                                ...node,
+                                data: {
+                                    ...node.data,
+                                    answers: updatedAnswers
+                                }
+                            };
+                        }
+                        return node;
+                    });
+                });
+
                 return addEdge(newEdge, filteredEdges);
             });
+            applyChanges(nodes, edges);
         },
-        [setEdges]
+        [nodes, edges, setEdges, setNodes]
     );
 
     const onNodeDragStop = useCallback(

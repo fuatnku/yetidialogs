@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, MouseEvent } from 'react';
 import { Handle, Position, useOnSelectionChange } from 'reactflow';
 import { Node } from './CustomNodeTypes';
 import './custom-node.css';
@@ -36,7 +36,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
 
     useEffect(() => {
         if (data.onDataChange) {
-            data.onDataChange(id, { question, answers,isRandomOrder });
+            data.onDataChange(id, { question, answers, isRandomOrder });
         }
     }, [question, answers, isRandomOrder]);
 
@@ -151,7 +151,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                                         transform: 'translateY(-50%)',
                                         width: 10,
                                         height: 10,
-                                        background: 'gray'
+                                        background: answer.connect ? 'gray' : 'red'  // Update color conditionally
                                     }}
                                 />
                             </div>
@@ -164,9 +164,9 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                     </button>
                 )}
                 {!editing && (
-                <button onClick={toggleRandomOrder} className="set-random-order-button">
-                    {isRandomOrder ? "Random Order" : "Normal Order"}
-                </button>
+                    <button onClick={toggleRandomOrder} className="set-random-order-button">
+                        {isRandomOrder ? "Random Order" : "Normal Order"}
+                    </button>
                 )}
             </div>
             {editing && (

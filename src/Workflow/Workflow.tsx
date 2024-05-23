@@ -1,3 +1,4 @@
+//WorkFlow.tsx
 import React, { useEffect, useCallback, useState } from 'react';
 import ReactFlow, {
     addEdge,
@@ -14,9 +15,8 @@ import { Box, Button } from '@chakra-ui/react';
 import { initialEdges, initialNodes } from './Workflow.constants';
 import DevTools from './Devtools';
 import './style.css';
-import TextUpdaterNode from './TextUpdaterNode';
-import './text-updater-node.css';
 
+import PauseNode from './PauseNode';
 import CustomNode from './CustomNode';
 import CustomEdge from './CustomEdge';
 
@@ -26,7 +26,7 @@ const edgeTypes = {
 
 const nodeTypes = {
     customNode: CustomNode,
-    textUpdaterNode: TextUpdaterNode,
+    pauseNode: PauseNode,
 };
 
 const defaultNode = {
@@ -125,10 +125,10 @@ export const Workflow = () => {
                     type: 'customEdge',
                 };
 
-                // Kaynak düğümün answers alanındaki connect key'ini güncelle
+                // Kaynak düğümün answers alanındaki connect key'ini güncelle (eğer answers mevcutsa)
                 setNodes((prevNodes) => {
                     return prevNodes.map(node => {
-                        if (node.id === connection.source) {
+                        if (node.id === connection.source && node.data.answers) {
                             const updatedAnswers = node.data.answers.map((answer, index) => {
                                 if (`choice-${index}` === connection.sourceHandle) {
                                     return { ...answer, connect: connection.target };
@@ -151,7 +151,7 @@ export const Workflow = () => {
             });
             applyChanges(nodes, edges);
         },
-        [nodes, edges, setEdges, setNodes]
+        [nodes, edges, setEdges, setNodes, applyChanges]
     );
 
     const onNodeDragStop = useCallback(
@@ -169,19 +169,30 @@ export const Workflow = () => {
 
     const handleDownload = useCallback(() => {
         const nodeData = nodes.reduce((acc, node) => {
-            const formattedAnswers = node.data.answers?.map(answer => {
-                const connectedEdge = edges.find(edge => edge.source === node.id && edge.sourceHandle === `choice-${node.data.answers.indexOf(answer)}`);
-                return {
-                    text: answer.text,
-                    connect: connectedEdge ? connectedEdge.target : undefined
+            if (node.type === 'pauseNode') {
+                // PauseNode için bağlantıyı bulma
+                const connectedEdge = edges.find(edge => edge.source === node.id);
+                acc[node.id.replace('pause-', '')] = {
+                    pause: node.data.pause,
+                    connect: connectedEdge ? connectedEdge.target : undefined, // Tek bir bağlantıyı kaydet
+                    position: node.position
                 };
-            });
-            acc[node.id] = {
-                question: node.data.question,
-                answers: formattedAnswers,
-                isRandomOrder: node.data.isRandomOrder || false,
-                position: node.position
-            };
+            } else {
+                // Diğer node tipleri için mevcut işlemler
+                const formattedAnswers = node.data.answers?.map(answer => {
+                    const connectedEdge = edges.find(edge => edge.source === node.id && edge.sourceHandle === `choice-${node.data.answers.indexOf(answer)}`);
+                    return {
+                        text: answer.text,
+                        connect: connectedEdge ? connectedEdge.target : undefined
+                    };
+                });
+                acc[node.id] = {
+                    question: node.data.question,
+                    answers: formattedAnswers,
+                    isRandomOrder: node.data.isRandomOrder || false,
+                    position: node.position
+                };
+            }
             return acc;
         }, {});
 
@@ -195,6 +206,7 @@ export const Workflow = () => {
         link.click();
         document.body.removeChild(link);
     }, [nodes, edges]);
+
 
     const handleUpload = useCallback((event) => {
         const file = event.target.files[0];
@@ -211,6 +223,7 @@ export const Workflow = () => {
                             question: data[key].question,
                             answers: data[key].answers,
                             isRandomOrder: data[key].isRandomOrder,
+                            isIconNode: data[key].isIconNode
                         }
                     }));
 
@@ -259,17 +272,22 @@ export const Workflow = () => {
             id: `${nodes.length + 1}`,
             position: { x: Math.random() * 250, y: Math.random() * 250 }
         };
-        setNodes((prevNodes) => [...prevNodes, newNode]);
-        applyChanges(nodes, edges);
+        //add new node to the nodes array
+        const newNodeStates = [...nodes, newNode];
+        setNodes(newNodeStates);
+        applyChanges(newNodeStates, edges);
     }, [nodes, setNodes]);
 
-    const addNewNode2 = useCallback(() => {
+    const addPauseNode = useCallback(() => {
         const newNode = {
-            ...defaultNode2,
-            id: `${nodes.length + 1}`,
-            position: { x: Math.random() * 250, y: Math.random() * 250 }
+            id: `pause-${nodes.length + 1}`,
+            type: 'pauseNode',
+            position: { x: Math.random() * 250, y: Math.random() * 250 },
+            data: { pause: '' }
         };
-        setNodes((prevNodes) => [...prevNodes, newNode]);
+        const newNodes = [...nodes, newNode];
+        setNodes(newNodes);
+        applyChanges(newNodes, edges);
     }, [nodes, setNodes]);
 
     const handleNodeChange = useCallback((id, field, value) => {
@@ -312,7 +330,8 @@ export const Workflow = () => {
             </label>
             <Button onClick={handleDownload} >Download JSON</Button>
             <Button onClick={newDiagram} m={2}>New</Button>
-            <Button onClick={addNewNode} m={2}>Add Node</Button>
+            <Button onClick={addNewNode} m={2}>New Question Node</Button>
+            <Button onClick={addPauseNode} m={2}>Add Pause Node</Button>
             <Button onClick={() => setViewDevTools(!viewDevTools)} m={4}>Debug</Button>
             <Button onClick={undo} m={2}>Undo</Button>
             <Button onClick={redo} m={2}>Redo</Button>

@@ -11,6 +11,7 @@ export interface Node extends ReactFlowNodeProps {
     question?: TranslatedText;
     answers?: Answer[];
     isRandomOrder?: RandomOrder;
+    isIconNode?: IconNode;
 }
 
 export interface TranslatedText {
@@ -25,4 +26,8 @@ export interface Answer {
 
 export interface RandomOrder {
     isRandomOrder: boolean;
+}
+
+export interface IconNode {
+    isIconNode: boolean;
 }

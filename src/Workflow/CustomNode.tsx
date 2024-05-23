@@ -1,3 +1,4 @@
+//CustomNode.tsx
 import React, { useState, useEffect, MouseEvent } from 'react';
 import { Handle, Position, useOnSelectionChange } from 'reactflow';
 import { Node } from './CustomNodeTypes';
@@ -29,23 +30,27 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
     });
     const [answers, setAnswers] = useState(data.answers || []);
     const [isRandomOrder, setIsRandomOrder] = useState(data.isRandomOrder || false);
-
+    const [isIconNode, setIsIconNode] = useState(data.isIconNode || false);
     const [editing, setEditing] = useState(false);
     const [editValue, setEditValue] = useState('');
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
     useEffect(() => {
         if (data.onDataChange) {
-            data.onDataChange(id, { question, answers, isRandomOrder });
+            data.onDataChange(id, { question, answers, isRandomOrder, isIconNode});
         }
-    }, [question, answers, isRandomOrder]);
+    }, [question, answers, isRandomOrder, isIconNode]);
 
     const handleLanguageToggle = () => {
         setLanguage(prev => (prev === 'en' ? 'tr' : 'en'));
     };
 
     const showNodeDetails = () => {
-        alert(`ID: ${id}\nQuestion: ${JSON.stringify(question, null, 2)}\nAnswers: ${JSON.stringify(answers, null, 2)}\nisRandomOrder: ${JSON.stringify(isRandomOrder, null, 2)}`);
+        alert(`ID: ${id}
+        Question: ${JSON.stringify(question, null, 2)}
+        Answers: ${JSON.stringify(answers, null, 2)}
+        isRandomOrder: ${JSON.stringify(isRandomOrder, null, 2)}
+        isIconNode: ${JSON.stringify(isIconNode, null, 2)}`);
     };
 
     const addAnswer = () => {
@@ -93,6 +98,11 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
     function toggleRandomOrder(event: MouseEvent<HTMLButtonElement, MouseEvent>): void {
         const orderStyle = !isRandomOrder;
         setIsRandomOrder(orderStyle);
+    }
+
+    function toggleIconNode(event: MouseEvent<HTMLButtonElement, MouseEvent>): void {
+        const iconStyle = !isIconNode;
+        setIsIconNode(iconStyle);
     }
 
     return (
@@ -160,12 +170,17 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                 ))}
                 {!editing && (
                     <button onClick={addAnswer} className="add-answer-button">
-                        {language === "en" ? "Add Answer" : "Cevap Ekle"}
+                        {language === "en" ? "Add " : "Ekle"}
                     </button>
                 )}
                 {!editing && (
                     <button onClick={toggleRandomOrder} className="set-random-order-button">
-                        {isRandomOrder ? "Random Order" : "Normal Order"}
+                        {isRandomOrder ? "Random" : "Normal"}
+                    </button>
+                )}
+                {!editing && (
+                    <button onClick={toggleIconNode} className="set-random-order-button">
+                        {isIconNode ? "icon" : "text"}
                     </button>
                 )}
             </div>

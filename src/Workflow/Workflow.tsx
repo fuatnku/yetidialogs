@@ -112,15 +112,24 @@ export const Workflow = () => {
 
     const onConnect = useCallback(
         (connection: Connection) => {
-            const edge = {
-                ...connection,
-                animated: true,
-                id: `${edges.length + 1}`,
-                type: 'customEdge',
-            };
-            setEdges((prevEdges) => addEdge(edge, prevEdges));
+            setEdges((prevEdges) => {
+                // Aynı kaynağa sahip olan eski bağlantıları kaldır
+                const filteredEdges = prevEdges.filter(
+                    edge => !(edge.source === connection.source && edge.sourceHandle === connection.sourceHandle)
+                );
+
+                // Yeni bağlantıyı oluştur
+                const newEdge = {
+                    ...connection,
+                    animated: true,
+                    id: `${filteredEdges.length + 1}`,
+                    type: 'customEdge',
+                };
+
+                return addEdge(newEdge, filteredEdges);
+            });
         },
-        [edges, setEdges]
+        [setEdges]
     );
 
     const onNodeDragStop = useCallback(

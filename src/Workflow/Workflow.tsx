@@ -269,7 +269,7 @@ export const Workflow = () => {
     const addNewNode = useCallback(() => {
         const newNode = {
             ...defaultNode,
-            id: `${nodes.length + 1}`,
+            id: `${Math.floor(Math.random() * 9000000) + 1000000}`,
             position: { x: Math.random() * 250, y: Math.random() * 250 }
         };
         //add new node to the nodes array
@@ -280,7 +280,7 @@ export const Workflow = () => {
 
     const addPauseNode = useCallback(() => {
         const newNode = {
-            id: `pause-${nodes.length + 1}`,
+            id: `${Math.floor(Math.random() * 9000000) + 1000000}`,
             type: 'pauseNode',
             position: { x: Math.random() * 250, y: Math.random() * 250 },
             data: { pause: '' }

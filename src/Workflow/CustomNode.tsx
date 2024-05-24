@@ -23,7 +23,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
         },
     });
 
-    const [language, setLanguage] = useState<'en' | 'tr'>('en');
+    const [language, setLanguage] = useState<'en' | 'tr'>('tr');
     const [question, setQuestion] = useState(data.question || {
         en: "Here, enter a question",
         tr: "Buraya bir soru girin"

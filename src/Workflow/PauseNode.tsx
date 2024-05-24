@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import {Handle, Position, useOnSelectionChange} from 'reactflow';
-import './custom-node.css'; // Mevcut stilleri kullanabilirsiniz
+import './custom-node.css';
 
 interface PauseNodeProps {
     id: string;
     data: {
         pause: string;
-        onChange: (id: string, field: string, value: any) => void;
+        onChange: (id: string, field: string, value: string) => void;
     };
 }
 
@@ -28,7 +28,7 @@ const PauseNode: React.FC<PauseNodeProps> = ({ id, data }) => {
         setEditing(false);
     };
     const cancelEdit = () => {
-        setText(data.pause); // Geri almak için mevcut değeri yeniden ayarlayın
+        setText(data.pause);
         setEditing(false);
     };
 
@@ -37,7 +37,12 @@ const PauseNode: React.FC<PauseNodeProps> = ({ id, data }) => {
             <div className="node-header">
                 <span>ID: {id}</span>
             </div>
-            <Handle type="target" position={Position.Left} id="target" />
+            <Handle
+                type="target"
+                position={Position.Left}
+                id="left-handle"
+                style={{ background: 'gray',width:10,height:10,transform: 'translateX(-50%)' }}
+            />
             {editing ? (
                 <div>
                     <textarea
@@ -52,9 +57,20 @@ const PauseNode: React.FC<PauseNodeProps> = ({ id, data }) => {
                     </div>
                 </div>
             ) : (
-                <div onDoubleClick={toggleEdit} className="node-content">{text || "Double-click to edit"}</div>
+                <div onDoubleClick={toggleEdit} className="node-content">{text || "Pause"}</div>
             )}
-            <Handle type="source" position={Position.Right} id="source" />
+            <Handle
+                type="source"
+                position={Position.Right}
+                style={{
+                    right: -10,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 10,
+                    height: 10,
+                    background:  'gray',
+                }}
+            />
         </div>
     );
 };

@@ -16,6 +16,8 @@ import { initialEdges, initialNodes } from './Workflow.constants';
 import DevTools from './Devtools';
 import './style.css';
 
+import SwitchNode from './SwitchNode';
+import CommandNode from './CommandNode';
 import PauseNode from './PauseNode';
 import CustomNode from './CustomNode';
 import CustomEdge from './CustomEdge';
@@ -27,18 +29,13 @@ const edgeTypes = {
 const nodeTypes = {
     customNode: CustomNode,
     pauseNode: PauseNode,
+    commandNode: CommandNode,
+    switchNode: SwitchNode,
 };
 
 const defaultNode = {
     id: 'new-node',
     type: 'customNode',
-    position: { x: 250, y: 5 },
-    data: { label: 'New Node' }
-};
-
-const defaultNode2 = {
-    id: 'new-node',
-    type: 'textUpdaterNode',
     position: { x: 250, y: 5 },
     data: { label: 'New Node' }
 };
@@ -169,30 +166,26 @@ export const Workflow = () => {
 
     const handleDownload = useCallback(() => {
         const nodeData = nodes.reduce((acc, node) => {
+            const connectedEdge = edges.find(edge => edge.source === node.id);
+            const commonData = {
+                connect: connectedEdge ? connectedEdge.target : undefined,
+                position: node.position
+            };
+
             if (node.type === 'pauseNode') {
-                // PauseNode için bağlantıyı bulma
-                const connectedEdge = edges.find(edge => edge.source === node.id);
-                acc[node.id.replace('pause-', '')] = {
-                    pause: node.data.pause,
-                    connect: connectedEdge ? connectedEdge.target : undefined, // Tek bir bağlantıyı kaydet
-                    position: node.position
-                };
-            } else {
-                // Diğer node tipleri için mevcut işlemler
-                const formattedAnswers = node.data.answers?.map(answer => {
-                    const connectedEdge = edges.find(edge => edge.source === node.id && edge.sourceHandle === `choice-${node.data.answers.indexOf(answer)}`);
-                    return {
-                        text: answer.text,
-                        connect: connectedEdge ? connectedEdge.target : undefined
-                    };
-                });
-                acc[node.id] = {
-                    question: node.data.question,
-                    answers: formattedAnswers,
-                    isRandomOrder: node.data.isRandomOrder || false,
-                    position: node.position
-                };
+                acc[node.id] = { ...commonData, pause: node.data.pause };
+            } else if (node.type === 'commandNode') {
+                acc[node.id] = { ...commonData, commands: node.data.commands };
+            } else if (node.type === 'switchNode') {
+                acc[node.id] = { ...commonData, switches: node.data.switches };
+            } else if (node.type === 'customNode') {
+                const answers = node.data.answers?.map(answer => ({
+                    text: answer.text,
+                    connect: connectedEdge ? connectedEdge.target : undefined
+                }));
+                acc[node.id] = { ...commonData, question: node.data.question, answers, isRandomOrder: node.data.isRandomOrder || false };
             }
+
             return acc;
         }, {});
 
@@ -207,7 +200,6 @@ export const Workflow = () => {
         document.body.removeChild(link);
     }, [nodes, edges]);
 
-
     const handleUpload = useCallback((event) => {
         const file = event.target.files[0];
         if (file) {
@@ -215,29 +207,34 @@ export const Workflow = () => {
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result as string);
-                    const parsedNodes = Object.keys(data).map((key) => ({
-                        id: key,
-                        type: 'customNode',
-                        position: data[key].position,
-                        data: {
-                            question: data[key].question,
-                            answers: data[key].answers,
-                            isRandomOrder: data[key].isRandomOrder,
-                            isIconNode: data[key].isIconNode
+                    const parsedNodes = Object.keys(data).map((key) => {
+                        const nodeData = data[key];
+                        let type = 'customNode';  // Default node type
+                        if (nodeData.commands) {
+                            type = 'commandNode';
+                        } else if (nodeData.pause !== undefined) {
+                            type = 'pauseNode';
+                        } else if (nodeData.switches) {
+                            type = 'switchNode';
                         }
-                    }));
+
+                        return {
+                            id: key,
+                            type: type,
+                            position: nodeData.position,
+                            data: nodeData
+                        };
+                    });
 
                     const parsedEdges = parsedNodes.flatMap((node) =>
-                        node.data.answers
-                            .filter((answer) => answer.connect)
-                            .map((answer, index) => ({
-                                id: `e${node.id}-${answer.connect}`,
-                                source: node.id,
-                                sourceHandle: `choice-${index}`,
-                                target: answer.connect,
-                                animated: true,
-                                type: 'customEdge'
-                            }))
+                        node.data.connect ? [{
+                            id: `e${node.id}-${node.data.connect}`,
+                            source: node.id,
+                            sourceHandle: 'source',  // Assume default handle for simplicity
+                            target: node.data.connect,
+                            animated: true,
+                            type: 'customEdge'
+                        }] : []
                     );
 
                     setNodes([]);
@@ -246,7 +243,6 @@ export const Workflow = () => {
                         setNodes(parsedNodes);
                         setEdges(parsedEdges);
                     }, 0);
-
                 } catch (error) {
                     console.error("File parsing error: ", error);
                 }
@@ -269,7 +265,7 @@ export const Workflow = () => {
     const addNewNode = useCallback(() => {
         const newNode = {
             ...defaultNode,
-            id: `${Math.floor(Math.random() * 9000000) + 1000000}`,
+            id: `Q${Math.floor(Math.random() * 9000000) + 1000000}`,
             position: { x: Math.random() * 250, y: Math.random() * 250 }
         };
         //add new node to the nodes array
@@ -280,10 +276,34 @@ export const Workflow = () => {
 
     const addPauseNode = useCallback(() => {
         const newNode = {
-            id: `${Math.floor(Math.random() * 9000000) + 1000000}`,
+            id: `P${Math.floor(Math.random() * 9000000) + 1000000}`,
             type: 'pauseNode',
             position: { x: Math.random() * 250, y: Math.random() * 250 },
-            data: { pause: '' }
+            data: { pause: 'Pause text' }
+        };
+        const newNodes = [...nodes, newNode];
+        setNodes(newNodes);
+        applyChanges(newNodes, edges);
+    }, [nodes, setNodes]);
+
+    const addCommandNode = useCallback(() => {
+        const newNode = {
+            id: `C${Math.floor(Math.random() * 9000000) + 1000000}`,
+            type: 'commandNode',
+            position: { x: Math.random() * 250, y: Math.random() * 250 },
+            data: { commands: ["Enter command line"] }
+        };
+        const newNodes = [...nodes, newNode];
+        setNodes(newNodes);
+        applyChanges(newNodes, edges);
+    }, [nodes, setNodes]);
+
+    const addSwitchNode = useCallback(() => {
+        const newNode = {
+            id: `S${Math.floor(Math.random() * 9000000) + 1000000}`,
+            type: 'switchNode',
+            position: { x: Math.random() * 250, y: Math.random() * 250 },
+            data: { switches: ['New switch'] }
         };
         const newNodes = [...nodes, newNode];
         setNodes(newNodes);
@@ -326,13 +346,14 @@ export const Workflow = () => {
                 id="upload-json"
             />
             <label htmlFor="upload-json">
-                <Button as="span" m={2}>Upload JSON</Button>
+                <Button as="span" m={2}>Upload</Button>
             </label>
-            <Button onClick={handleDownload} >Download JSON</Button>
+            <Button onClick={handleDownload} >Download</Button>
             <Button onClick={newDiagram} m={2}>New</Button>
-            <Button onClick={addNewNode} m={2}>New Question Node</Button>
-            <Button onClick={addPauseNode} m={2}>Add Pause Node</Button>
-            <Button onClick={() => setViewDevTools(!viewDevTools)} m={4}>Debug</Button>
+            <Button onClick={addNewNode} m={2}>+Qstn</Button>
+            <Button onClick={addPauseNode} m={2}>+Pause</Button>
+            <Button onClick={addCommandNode} m={2}>+Cmd</Button>
+            <Button onClick={addSwitchNode} m={2}>+Switch</Button>
             <Button onClick={undo} m={2}>Undo</Button>
             <Button onClick={redo} m={2}>Redo</Button>
             <label>Undo position: {currentHistoryIndex} / length:{history.length-1}</label>

@@ -40,6 +40,7 @@ const defaultNode = {
     data: {label: 'New Node'}
 };
 
+
 export const Workflow = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -185,6 +186,7 @@ export const Workflow = () => {
                     });
                     return {
                         ...commonData,
+                        question: node.data.question,
                         answers,
                     };
                 default:

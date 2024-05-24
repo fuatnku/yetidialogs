@@ -148,7 +148,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                                         transform: 'translateY(-50%)',
                                         width: 10,
                                         height: 10,
-                                        background: answer.connect ? 'gray' : 'red'  // Update color conditionally
+                                        background: 'gray',
                                     }}
                                 />
                             </div>

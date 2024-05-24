@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { Handle, Position } from 'reactflow';
 import './custom-node.css';
 
@@ -12,6 +12,7 @@ interface SwitchNodeProps {
     data: {
         switches: Switch[];
         onChange: (id: string, switches: Switch[]) => void;
+        onDataChange: (id: string, newData: any) => void;
     };
 }
 
@@ -20,6 +21,12 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
     const [editingIndex, setEditingIndex] = useState(-1);
     const [editText, setEditText] = useState('');
     const [editConnect, setEditConnect] = useState('');
+
+    useEffect(() => {
+        if (data.onDataChange) {
+            data.onDataChange(id, { switches });
+        }
+    }, [switches]);
 
     const addSwitch = () => {
         const newSwitches = [...switches, { text: '', connect: '' }];

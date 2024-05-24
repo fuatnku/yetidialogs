@@ -356,7 +356,7 @@ export const Workflow = () => {
             <Button onClick={addSwitchNode} m={2}>+Switch</Button>
             <Button onClick={undo} m={2}>Undo</Button>
             <Button onClick={redo} m={2}>Redo</Button>
-            <label>Undo position: {currentHistoryIndex} / length:{history.length-1}</label>
+            <label>Undo {currentHistoryIndex} of {history.length-1}</label>
             <ReactFlow
                 nodes={nodes.map(node => ({
                     ...node,

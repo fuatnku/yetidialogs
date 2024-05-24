@@ -141,7 +141,7 @@ export const Workflow = () => {
         [nodes, setNodes]
     );
 
-    const handleDownload = useCallback(() => {
+    const exportWorkflow = useCallback(() => {
         const nodeData = nodes.map(node => {
             // Bu node'dan çıkan tüm bağlantıları bul
             const outgoingEdges = edges.filter(edge => edge.source === node.id);
@@ -152,16 +152,23 @@ export const Workflow = () => {
 
             switch (node.type) {
                 case 'pauseNode':
-                case 'commandNode':
-                    // Bu tipler için sadece bir çıkış bağlantısı olabilir
-                    const singleConnection = outgoingEdges[0];
+                    // Pause node için tek bir bağlantı al
+                    const pauseConnect = outgoingEdges.length > 0 ? outgoingEdges[0].target : null;
                     return {
                         ...commonData,
-                        connect: singleConnection ? singleConnection.target : null,
+                        pause: node.data.pause,
+                        connect: pauseConnect
                     };
-
+                case 'commandNode':
+                    // Command node için tüm komutları array olarak ekle ve tek bir bağlantı al
+                    const commandConnect = outgoingEdges.length > 0 ? outgoingEdges[0].target : null;
+                    return {
+                        ...commonData,
+                        commands: node.data.commands,
+                        connect: commandConnect
+                    };
                 case 'switchNode':
-                    // Her switch için bağlantıları işle
+                    // Switch node için tüm switch'leri array olarak ekle ve her switch için bağlantı al
                     const switches = node.data.switches.map((sw, index) => {
                         const connection = outgoingEdges.find(edge => edge.sourceHandle === `source-${index}`);
                         return { ...sw, connect: connection ? connection.target : null };
@@ -170,9 +177,8 @@ export const Workflow = () => {
                         ...commonData,
                         switches,
                     };
-
                 case 'customNode':
-                    // Her answer için bağlantıları işle
+                    // Custom node için tüm cevapları array olarak ekle ve her cevap için bağlantı al
                     const answers = node.data.answers.map((answer, index) => {
                         const connection = outgoingEdges.find(edge => edge.sourceHandle === `choice-${index}`);
                         return { ...answer, connect: connection ? connection.target : null };
@@ -181,7 +187,6 @@ export const Workflow = () => {
                         ...commonData,
                         answers,
                     };
-
                 default:
                     return commonData;
             }
@@ -196,79 +201,6 @@ export const Workflow = () => {
         link.click();
         link.remove();
     }, [nodes, edges]);
-
-    const handleUpload = useCallback((event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    const parsedNodes = Object.keys(data).map((key) => {
-                        const nodeData = data[key];
-                        let type = 'customNode';  // Varsayılan düğüm tipi
-                        if (nodeData.commands) {
-                            type = 'commandNode';
-                        } else if (nodeData.pause !== undefined) {
-                            type = 'pauseNode';
-                        } else if (nodeData.switches) {
-                            type = 'switchNode';
-                        }
-
-                        return {
-                            id: key,
-                            type: type,
-                            position: nodeData.position,
-                            data: nodeData
-                        };
-                    });
-
-                    const parsedEdges = parsedNodes.flatMap((node) => {
-                        const nodeEdges = [];
-                        if (node.data.answers) {
-                            node.data.answers.forEach((answer, index) => {
-                                if (answer.connect) {
-                                    nodeEdges.push({
-                                        id: `e${node.id}-${answer.connect}`,
-                                        source: node.id,
-                                        sourceHandle: `choice-${index}`, // Kaynak handle'ı düğüme göre ayarla
-                                        target: answer.connect,
-                                        animated: true,
-                                        type: 'customEdge'
-                                    });
-                                }
-                            });
-                        }
-                        if (node.data.switches) {
-                            node.data.switches.forEach((sw, index) => {
-                                if (sw.connect) {
-                                    nodeEdges.push({
-                                        id: `e${node.id}-${sw.connect}`,
-                                        source: node.id,
-                                        sourceHandle: `source-${index}`,
-                                        target: sw.connect,
-                                        animated: true,
-                                        type: 'customEdge'
-                                    });
-                                }
-                            });
-                        }
-                        return nodeEdges;
-                    });
-
-                    setNodes([]);
-                    setEdges([]);
-                    setTimeout(() => {
-                        setNodes(parsedNodes);
-                        setEdges(parsedEdges);
-                    }, 0);
-                } catch (error) {
-                    console.error("File parsing error: ", error);
-                }
-            };
-            reader.readAsText(file);
-        }
-    }, [setNodes, setEdges]);
 
     const saveToFile = useCallback(() => {
         const workflowData = {
@@ -412,7 +344,7 @@ export const Workflow = () => {
                 <Button as="span" m={2}>Load</Button>
             </label>
             <Button onClick={saveToFile} m={2}>Save</Button>
-            <Button onClick={handleDownload}>Export</Button>
+            <Button onClick={exportWorkflow}>Export</Button>
             <Button onClick={toggleLanguage} m={2}>Lang {language}</Button>
             <Button onClick={newDiagram} m={2}>New</Button>
             <Button backgroundColor="#A3D8F4" onClick={addNewNode} m={2}>+Qstn</Button>

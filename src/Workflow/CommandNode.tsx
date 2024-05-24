@@ -1,15 +1,17 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Handle, Position, useOnSelectionChange} from 'reactflow';
-import './custom-node.css';  // Use existing styles
+import './custom-node.css';
+import {Node} from "./CustomNodeTypes";  // Use existing styles
 
 interface CommandNodeProps {
     id: string;
     data: {
+        id: string;
         commands: string[];
-        onChange: (id: string, commands: string[]) => void;
+        onChange: (id: string, field: string, value: any) => void;
+        onDataChange: (id: string, newData: any) => void;
     };
 }
-
 const CommandNode: React.FC<CommandNodeProps> = ({id, data}) => {
     const [commands, setCommands] = useState(data.commands);
     const [editingIndex, setEditingIndex] = useState(-1);
@@ -23,8 +25,14 @@ const CommandNode: React.FC<CommandNodeProps> = ({id, data}) => {
         },
     });
 
+    useEffect(() => {
+        if (data.onDataChange) {
+            data.onDataChange(id, {  commands });
+        }
+    }, [commands]);
+
     const addCommand = () => {
-        const newCommands = [...commands, ''];
+        const newCommands = [...commands, 'Command'];
         setCommands(newCommands);
         data.onChange(id, newCommands);
     };

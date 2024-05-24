@@ -1,4 +1,3 @@
-//WorkFlow.tsx
 import React, {useEffect, useCallback, useState} from 'react';
 import ReactFlow, {
     addEdge,
@@ -149,8 +148,6 @@ export const Workflow = () => {
 
             const commonData = {
                 id: node.id,
-                type: node.type,
-                position: node.position,
             };
 
             switch (node.type) {
@@ -273,6 +270,41 @@ export const Workflow = () => {
         }
     }, [setNodes, setEdges]);
 
+    const saveToFile = useCallback(() => {
+        const workflowData = {
+            nodes,
+            edges
+        };
+        const data = JSON.stringify(workflowData, null, 2);
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'workflowData.json';
+        link.click();
+        link.remove();
+    }, [nodes, edges]);
+
+    const loadFromFile = useCallback((event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    setNodes([]);
+                    setEdges([]);
+                    setTimeout(() => {
+                        setNodes(data.nodes || []);
+                        setEdges(data.edges || []);
+                    }, 0);
+                } catch (error) {
+                    console.error("File parsing error: ", error);
+                }
+            };
+            reader.readAsText(file);
+        }
+    }, [setNodes, setEdges]);
 
     const newDiagram = useCallback(() => {
         if (window.confirm('Are you sure you want to start a new diagram? This will erase the current diagram.')) {
@@ -372,14 +404,15 @@ export const Workflow = () => {
             <input
                 type="file"
                 accept=".json"
-                onChange={handleUpload}
+                onChange={loadFromFile}
                 style={{display: 'none'}}
-                id="upload-json"
+                id="load-file"
             />
-            <label htmlFor="upload-json">
-                <Button as="span" m={2}>Upload</Button>
+            <label htmlFor="load-file">
+                <Button as="span" m={2}>Load</Button>
             </label>
-            <Button onClick={handleDownload}>Download</Button>
+            <Button onClick={saveToFile} m={2}>Save</Button>
+            <Button onClick={handleDownload}>Export</Button>
             <Button onClick={toggleLanguage} m={2}>Lang {language}</Button>
             <Button onClick={newDiagram} m={2}>New</Button>
             <Button backgroundColor="#A3D8F4" onClick={addNewNode} m={2}>+Qstn</Button>
@@ -390,6 +423,7 @@ export const Workflow = () => {
             <Button onClick={redo} m={2}>Redo</Button>
             <label>Undo {currentHistoryIndex} of {history.length - 1}</label>
             <label> ( n:{nodes.length} e:{edges.length} )</label>
+
             <ReactFlow
                 nodes={nodes.map(node => ({
                     ...node,

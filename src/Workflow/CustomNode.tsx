@@ -1,6 +1,7 @@
 //CustomNode.tsx
 import React, { useState, useEffect, MouseEvent } from 'react';
 import { Handle, Position, useOnSelectionChange } from 'reactflow';
+import { useLanguage } from './LanguageContext'; // Import the useLanguage hook
 import { Node } from './CustomNodeTypes';
 import './custom-node.css';
 
@@ -14,16 +15,15 @@ interface CustomNodeComponentProps {
 }
 
 const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
+    const { language, toggleLanguage } = useLanguage(); // Use language from context
     const [isSelected, setIsSelected] = useState(false);
 
     useOnSelectionChange({
         onChange: ({ nodes }) => {
-            const isSelected = nodes.some(node => node.id === id);
-            setIsSelected(isSelected);
+            setIsSelected(nodes.some(node => node.id === id));
         },
     });
 
-    const [language, setLanguage] = useState<'en' | 'tr'>('tr');
     const [question, setQuestion] = useState(data.question || {
         en: "Here, enter a question",
         tr: "Buraya bir soru girin"
@@ -40,10 +40,6 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
             data.onDataChange(id, { question, answers, isRandomOrder, isIconNode});
         }
     }, [question, answers, isRandomOrder, isIconNode]);
-
-    const handleLanguageToggle = () => {
-        setLanguage(prev => (prev === 'en' ? 'tr' : 'en'));
-    };
 
     const addAnswer = () => {
         const newAnswer = { text: { en: "New answer", tr: "Yeni cevap" }, connect: "" };
@@ -100,7 +96,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
     return (
         <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
             <div className="node-header-custom">
-                <button onClick={handleLanguageToggle}>Question Node - {language.toUpperCase()}</button>
+                <button onClick={toggleLanguage}>Question Node - {language.toUpperCase()}</button>
                 <span className="node-id">ID: {id}</span>
             </div>
             <Handle

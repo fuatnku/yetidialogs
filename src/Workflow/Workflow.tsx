@@ -21,6 +21,7 @@ import CommandNode from './CommandNode';
 import PauseNode from './PauseNode';
 import CustomNode from './CustomNode';
 import CustomEdge from './CustomEdge';
+import { useLanguage } from './LanguageContext'; // Import the useLanguage hook
 
 const edgeTypes = {
     customEdge: CustomEdge,
@@ -47,6 +48,8 @@ export const Workflow = () => {
 
     const [history, setHistory] = useState([{nodes: initialNodes, edges: initialEdges}]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
+    const { language, toggleLanguage } = useLanguage(); // Use language from context
+
 
     const applyChanges = (newNodes, newEdges) => {
         const newHistory = history.slice(0, currentHistoryIndex + 1); // Mevcut indeksten sonraki geçmişi temizle
@@ -140,40 +143,52 @@ export const Workflow = () => {
     );
 
     const handleDownload = useCallback(() => {
-        const nodeData = nodes.reduce((acc, node) => {
-            // Bağlantıları aramak için her düğümü kontrol et
-            const connections = edges.filter(edge => edge.source === node.id);
+        const nodeData = nodes.map(node => {
+            // Bu node'dan çıkan tüm bağlantıları bul
+            const outgoingEdges = edges.filter(edge => edge.source === node.id);
 
             const commonData = {
-                // Tüm bağlantıları veya bağlantısı olmayanları belirt
-                position: node.position
+                id: node.id,
+                type: node.type,
+                position: node.position,
             };
 
-            if (node.type === 'pauseNode') {
-                acc[node.id] = {...commonData, pause: node.data.pause};
-            } else if (node.type === 'commandNode') {
-                acc[node.id] = {...commonData, commands: node.data.commands};
-            } else if (node.type === 'switchNode') {
-                const switches = node.data.switches.map((sw, index) => {
-                    const connect = connections.find(edge => edge.sourceHandle === `source-${index}`);
-                    return {...sw, connect: connect ? connect.target : undefined};
-                });
-                acc[node.id] = {...commonData, switches: switches};
-            } else if (node.type === 'customNode') {
-                const answers = node.data.answers?.map((answer, index) => {
-                    const connect = connections.find(edge => edge.sourceHandle === `choice-${index}`);
-                    return {...answer, connect: connect ? connect.target : undefined};
-                });
-                acc[node.id] = {
-                    ...commonData,
-                    question: node.data.question,
-                    answers,
-                    isRandomOrder: node.data.isRandomOrder || false
-                };
-            }
+            switch (node.type) {
+                case 'pauseNode':
+                case 'commandNode':
+                    // Bu tipler için sadece bir çıkış bağlantısı olabilir
+                    const singleConnection = outgoingEdges[0];
+                    return {
+                        ...commonData,
+                        connect: singleConnection ? singleConnection.target : null,
+                    };
 
-            return acc;
-        }, {});
+                case 'switchNode':
+                    // Her switch için bağlantıları işle
+                    const switches = node.data.switches.map((sw, index) => {
+                        const connection = outgoingEdges.find(edge => edge.sourceHandle === `source-${index}`);
+                        return { ...sw, connect: connection ? connection.target : null };
+                    });
+                    return {
+                        ...commonData,
+                        switches,
+                    };
+
+                case 'customNode':
+                    // Her answer için bağlantıları işle
+                    const answers = node.data.answers.map((answer, index) => {
+                        const connection = outgoingEdges.find(edge => edge.sourceHandle === `choice-${index}`);
+                        return { ...answer, connect: connection ? connection.target : null };
+                    });
+                    return {
+                        ...commonData,
+                        answers,
+                    };
+
+                default:
+                    return commonData;
+            }
+        });
 
         const data = JSON.stringify(nodeData, null, 2);
         const blob = new Blob([data], {type: 'application/json'});
@@ -181,11 +196,9 @@ export const Workflow = () => {
         const link = document.createElement('a');
         link.href = url;
         link.download = 'workflow.json';
-        document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        link.remove();
     }, [nodes, edges]);
-
 
     const handleUpload = useCallback((event) => {
         const file = event.target.files[0];
@@ -367,6 +380,7 @@ export const Workflow = () => {
                 <Button as="span" m={2}>Upload</Button>
             </label>
             <Button onClick={handleDownload}>Download</Button>
+            <Button onClick={toggleLanguage} m={2}>Lang {language}</Button>
             <Button onClick={newDiagram} m={2}>New</Button>
             <Button backgroundColor="#A3D8F4" onClick={addNewNode} m={2}>+Qstn</Button>
             <Button backgroundColor="#B9E2C8" onClick={addPauseNode} m={2}>+Pause</Button>
@@ -375,6 +389,7 @@ export const Workflow = () => {
             <Button onClick={undo} m={2}>Undo</Button>
             <Button onClick={redo} m={2}>Redo</Button>
             <label>Undo {currentHistoryIndex} of {history.length - 1}</label>
+            <label> ( n:{nodes.length} e:{edges.length} )</label>
             <ReactFlow
                 nodes={nodes.map(node => ({
                     ...node,

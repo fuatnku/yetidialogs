@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Handle, Position} from 'reactflow';
+import {Handle, Position, useOnSelectionChange} from 'reactflow';
 import './custom-node.css';  // Use existing styles
 
 interface CommandNodeProps {
@@ -14,6 +14,14 @@ const CommandNode: React.FC<CommandNodeProps> = ({id, data}) => {
     const [commands, setCommands] = useState(data.commands);
     const [editingIndex, setEditingIndex] = useState(-1);
     const [editValue, setEditValue] = useState('');
+    const [isSelected, setIsSelected] = useState(false);
+
+    useOnSelectionChange({
+        onChange: ({ nodes }) => {
+            const isSelected = nodes.some(node => node.id === id);
+            setIsSelected(isSelected);
+        },
+    });
 
     const addCommand = () => {
         const newCommands = [...commands, ''];
@@ -45,9 +53,9 @@ const CommandNode: React.FC<CommandNodeProps> = ({id, data}) => {
     };
 
     return (
-        <div className="custom-node">
+        <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
             <div className="node-header-command">
-                    <span>Command Node</span>
+                <span>Command Node</span>
                     <span className="node-id">ID: {id}</span>
             </div>
             <Handle type="target" position={Position.Left} id="left-handle"

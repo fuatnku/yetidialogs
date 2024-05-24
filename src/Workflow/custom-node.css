@@ -24,6 +24,46 @@
     background: #ecedf3;
 }
 
+.node-header-custom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    margin-top: -4px;
+    font-size: 10px;
+    background-color: #A3D8F4;
+}
+
+.node-header-pause {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    margin-top: -4px;
+    font-size: 10px;
+    background-color: #B9E2C8;
+}
+
+.node-header-switch {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    margin-top: -4px;
+    font-size: 10px;
+    background-color: #F4C1D9;
+}
+
+.node-header-command {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    margin-top: -4px;
+    font-size: 10px;
+    background-color: #FFFACD;
+}
+
 .node-content {
     margin-bottom: 2px;
 }
@@ -92,4 +132,75 @@
     background: #ccc;
     border-radius: 3px;
     margin-bottom: 5px;
+}
+/* Uygulanacak switch-container stili */
+.switch-container {
+    padding: 2px;
+    margin-bottom: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    display: flex;
+    align-items: center; /* İçerikleri merkezlemek için */
+    position: relative; /* Position tanımlaması eklenerek daha iyi bir layout sağlanır */
+}
+
+/* Switch text input stili */
+.switch-container input[type="text"] {
+    flex-grow: 1; /* Input elementini esnek yapmak için */
+    padding: 2px;
+    margin-right: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+/* Ortak kullanılan Handle stilini tanımlayın */
+.handle {
+    background: gray;
+    width: 10px;
+    height: 10px;
+    position: absolute; /* Handle'ın konumlandırılması için */
+    right: -5px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Edit controls düzenlemesi */
+.edit-controls {
+    margin-top: 5px; /* Düzenleme kontrollerine biraz boşluk ekleyin */
+    display: flex;
+    justify-content: space-between; /* Düğmeleri yaymak için */
+}
+
+.edit-controls button {
+    padding: 3px 5px; /* Daha iyi tıklama alanı için */
+    font-size: 12px; /* Font boyutunu ayarlayın */
+    cursor: pointer; /* Cursor tipini pointer yapın */
+}
+
+.add-answer-button, .delete-answer-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+/* Stil tutarlılığını korumak için eklenen diğer ayarlar */
+.custom-node, .switch-container {
+    background-color: #fff; /* Arka plan rengi tutarlılığı */
+}
+
+.button-custom {
+    background-color: #A3D8F4;
+}
+
+.button-pause {
+    background-color: #B9E2C8;
+}
+
+.button-command {
+    background-color: #FFFACD;
+}
+
+.button-switch {
+    background-color: #F4C1D9;
 }

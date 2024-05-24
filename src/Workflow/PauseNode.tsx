@@ -34,7 +34,7 @@ const PauseNode: React.FC<PauseNodeProps> = ({ id, data }) => {
 
     return (
         <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
-            <div className="node-header">
+            <div className="node-header-pause">
                 <span>ID: {id}</span>
             </div>
             <Handle

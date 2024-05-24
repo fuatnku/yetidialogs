@@ -1,5 +1,5 @@
 //WorkFlow.tsx
-import React, { useEffect, useCallback, useState } from 'react';
+import React, {useEffect, useCallback, useState} from 'react';
 import ReactFlow, {
     addEdge,
     Background,
@@ -11,8 +11,8 @@ import ReactFlow, {
     NodeDragStopEvent,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Box, Button } from '@chakra-ui/react';
-import { initialEdges, initialNodes } from './Workflow.constants';
+import {Box, Button} from '@chakra-ui/react';
+import {initialEdges, initialNodes} from './Workflow.constants';
 import DevTools from './Devtools';
 import './style.css';
 
@@ -36,8 +36,8 @@ const nodeTypes = {
 const defaultNode = {
     id: 'new-node',
     type: 'customNode',
-    position: { x: 250, y: 5 },
-    data: { label: 'New Node' }
+    position: {x: 250, y: 5},
+    data: {label: 'New Node'}
 };
 
 export const Workflow = () => {
@@ -45,12 +45,12 @@ export const Workflow = () => {
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [viewDevTools, setViewDevTools] = React.useState(false);
 
-    const [history, setHistory] = useState([{ nodes: initialNodes, edges: initialEdges }]);
+    const [history, setHistory] = useState([{nodes: initialNodes, edges: initialEdges}]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
 
     const applyChanges = (newNodes, newEdges) => {
         const newHistory = history.slice(0, currentHistoryIndex + 1); // Mevcut indeksten sonraki geçmişi temizle
-        newHistory.push({ nodes: newNodes, edges: newEdges });
+        newHistory.push({nodes: newNodes, edges: newEdges});
         setHistory(newHistory);
         setCurrentHistoryIndex(newHistory.length - 1);
     };
@@ -106,56 +106,31 @@ export const Workflow = () => {
         localStorage.setItem('workflowEdges', JSON.stringify(edges));
     }, [nodes, edges]);
 
-    const onConnect = useCallback(
-        (connection: Connection) => {
-            setEdges((prevEdges) => {
-                // Aynı kaynağa sahip olan eski bağlantıları kaldır
-                const filteredEdges = prevEdges.filter(
-                    edge => !(edge.source === connection.source && edge.sourceHandle === connection.sourceHandle)
-                );
+    const onConnect = useCallback((connection: Connection) => {
+        setEdges((prevEdges) => {
+            // Eski bağlantıları id üzerinden filtrele
+            const filteredEdges = prevEdges.filter(
+                edge => !(edge.source === connection.source && edge.sourceHandle === connection.sourceHandle)
+            );
 
-                // Yeni bağlantıyı oluştur
-                const newEdge = {
-                    ...connection,
-                    animated: true,
-                    id: `${filteredEdges.length + 1}`,
-                    type: 'customEdge',
-                };
+            // Yeni bağlantıyı id ile oluştur
+            const newEdge = {
+                ...connection,
+                animated: true,
+                id: `${connection.source}-${connection.sourceHandle}`,  // Benzersiz ID atama
+                type: 'customEdge',
+            };
 
-                // Kaynak düğümün answers alanındaki connect key'ini güncelle (eğer answers mevcutsa)
-                setNodes((prevNodes) => {
-                    return prevNodes.map(node => {
-                        if (node.id === connection.source && node.data.answers) {
-                            const updatedAnswers = node.data.answers.map((answer, index) => {
-                                if (`choice-${index}` === connection.sourceHandle) {
-                                    return { ...answer, connect: connection.target };
-                                }
-                                return answer;
-                            });
-                            return {
-                                ...node,
-                                data: {
-                                    ...node.data,
-                                    answers: updatedAnswers
-                                }
-                            };
-                        }
-                        return node;
-                    });
-                });
-
-                return addEdge(newEdge, filteredEdges);
-            });
-            applyChanges(nodes, edges);
-        },
-        [nodes, edges, setEdges, setNodes, applyChanges]
-    );
+            return addEdge(newEdge, filteredEdges);
+        });
+        applyChanges(nodes, edges);
+    }, [nodes, edges, setEdges, setNodes, applyChanges]);
 
     const onNodeDragStop = useCallback(
         (event: NodeDragStopEvent, node: Node) => {
             const roundedPositions = nodes.map(n => ({
                 ...n,
-                position: { x: Math.round(n.position.x), y: Math.round(n.position.y) }
+                position: {x: Math.round(n.position.x), y: Math.round(n.position.y)}
             }));
             setNodes(roundedPositions);
             applyChanges(roundedPositions, edges);
@@ -166,31 +141,42 @@ export const Workflow = () => {
 
     const handleDownload = useCallback(() => {
         const nodeData = nodes.reduce((acc, node) => {
-            const connectedEdge = edges.find(edge => edge.source === node.id);
+            // Bağlantıları aramak için her düğümü kontrol et
+            const connections = edges.filter(edge => edge.source === node.id);
+
             const commonData = {
-                connect: connectedEdge ? connectedEdge.target : undefined,
+                // Tüm bağlantıları veya bağlantısı olmayanları belirt
                 position: node.position
             };
 
             if (node.type === 'pauseNode') {
-                acc[node.id] = { ...commonData, pause: node.data.pause };
+                acc[node.id] = {...commonData, pause: node.data.pause};
             } else if (node.type === 'commandNode') {
-                acc[node.id] = { ...commonData, commands: node.data.commands };
+                acc[node.id] = {...commonData, commands: node.data.commands};
             } else if (node.type === 'switchNode') {
-                acc[node.id] = { ...commonData, switches: node.data.switches };
+                const switches = node.data.switches.map((sw, index) => {
+                    const connect = connections.find(edge => edge.sourceHandle === `source-${index}`);
+                    return {...sw, connect: connect ? connect.target : undefined};
+                });
+                acc[node.id] = {...commonData, switches: switches};
             } else if (node.type === 'customNode') {
-                const answers = node.data.answers?.map(answer => ({
-                    text: answer.text,
-                    connect: connectedEdge ? connectedEdge.target : undefined
-                }));
-                acc[node.id] = { ...commonData, question: node.data.question, answers, isRandomOrder: node.data.isRandomOrder || false };
+                const answers = node.data.answers?.map((answer, index) => {
+                    const connect = connections.find(edge => edge.sourceHandle === `choice-${index}`);
+                    return {...answer, connect: connect ? connect.target : undefined};
+                });
+                acc[node.id] = {
+                    ...commonData,
+                    question: node.data.question,
+                    answers,
+                    isRandomOrder: node.data.isRandomOrder || false
+                };
             }
 
             return acc;
         }, {});
 
         const data = JSON.stringify(nodeData, null, 2);
-        const blob = new Blob([data], { type: 'application/json' });
+        const blob = new Blob([data], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -200,16 +186,17 @@ export const Workflow = () => {
         document.body.removeChild(link);
     }, [nodes, edges]);
 
+
     const handleUpload = useCallback((event) => {
         const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
-                    const data = JSON.parse(e.target.result as string);
+                    const data = JSON.parse(e.target.result);
                     const parsedNodes = Object.keys(data).map((key) => {
                         const nodeData = data[key];
-                        let type = 'customNode';  // Default node type
+                        let type = 'customNode';  // Varsayılan düğüm tipi
                         if (nodeData.commands) {
                             type = 'commandNode';
                         } else if (nodeData.pause !== undefined) {
@@ -226,16 +213,38 @@ export const Workflow = () => {
                         };
                     });
 
-                    const parsedEdges = parsedNodes.flatMap((node) =>
-                        node.data.connect ? [{
-                            id: `e${node.id}-${node.data.connect}`,
-                            source: node.id,
-                            sourceHandle: 'source',  // Assume default handle for simplicity
-                            target: node.data.connect,
-                            animated: true,
-                            type: 'customEdge'
-                        }] : []
-                    );
+                    const parsedEdges = parsedNodes.flatMap((node) => {
+                        const nodeEdges = [];
+                        if (node.data.answers) {
+                            node.data.answers.forEach((answer, index) => {
+                                if (answer.connect) {
+                                    nodeEdges.push({
+                                        id: `e${node.id}-${answer.connect}`,
+                                        source: node.id,
+                                        sourceHandle: `choice-${index}`, // Kaynak handle'ı düğüme göre ayarla
+                                        target: answer.connect,
+                                        animated: true,
+                                        type: 'customEdge'
+                                    });
+                                }
+                            });
+                        }
+                        if (node.data.switches) {
+                            node.data.switches.forEach((sw, index) => {
+                                if (sw.connect) {
+                                    nodeEdges.push({
+                                        id: `e${node.id}-${sw.connect}`,
+                                        source: node.id,
+                                        sourceHandle: `source-${index}`,
+                                        target: sw.connect,
+                                        animated: true,
+                                        type: 'customEdge'
+                                    });
+                                }
+                            });
+                        }
+                        return nodeEdges;
+                    });
 
                     setNodes([]);
                     setEdges([]);
@@ -250,6 +259,7 @@ export const Workflow = () => {
             reader.readAsText(file);
         }
     }, [setNodes, setEdges]);
+
 
     const newDiagram = useCallback(() => {
         if (window.confirm('Are you sure you want to start a new diagram? This will erase the current diagram.')) {
@@ -266,7 +276,7 @@ export const Workflow = () => {
         const newNode = {
             ...defaultNode,
             id: `Q${Math.floor(Math.random() * 9000000) + 1000000}`,
-            position: { x: Math.random() * 250, y: Math.random() * 250 }
+            position: {x: Math.random() * 250, y: Math.random() * 250}
         };
         //add new node to the nodes array
         const newNodeStates = [...nodes, newNode];
@@ -278,8 +288,8 @@ export const Workflow = () => {
         const newNode = {
             id: `P${Math.floor(Math.random() * 9000000) + 1000000}`,
             type: 'pauseNode',
-            position: { x: Math.random() * 250, y: Math.random() * 250 },
-            data: { pause: 'Pause text' }
+            position: {x: Math.random() * 250, y: Math.random() * 250},
+            data: {pause: 'Pause text'}
         };
         const newNodes = [...nodes, newNode];
         setNodes(newNodes);
@@ -290,8 +300,8 @@ export const Workflow = () => {
         const newNode = {
             id: `C${Math.floor(Math.random() * 9000000) + 1000000}`,
             type: 'commandNode',
-            position: { x: Math.random() * 250, y: Math.random() * 250 },
-            data: { commands: ["Enter command line"] }
+            position: {x: Math.random() * 250, y: Math.random() * 250},
+            data: {commands: ["Enter command line"]}
         };
         const newNodes = [...nodes, newNode];
         setNodes(newNodes);
@@ -302,8 +312,8 @@ export const Workflow = () => {
         const newNode = {
             id: `S${Math.floor(Math.random() * 9000000) + 1000000}`,
             type: 'switchNode',
-            position: { x: Math.random() * 250, y: Math.random() * 250 },
-            data: { switches: ['New switch'] }
+            position: {x: Math.random() * 250, y: Math.random() * 250},
+            data: {switches: [{text: 'Switch text', connect: ''}]}
         };
         const newNodes = [...nodes, newNode];
         setNodes(newNodes);
@@ -312,19 +322,27 @@ export const Workflow = () => {
 
     const handleNodeChange = useCallback((id, field, value) => {
         setNodes(prevNodes => prevNodes.map(node =>
-            node.id === id ? { ...node, data: { ...node.data, [field]: value }} : node
+            node.id === id ? {...node, data: {...node.data, [field]: value}} : node
         ));
-//        applyChanges(nodes, edges);
-        console.log('handleNodeChange applied changes');
     }, [setNodes]);
 
     const handleDataChange = useCallback((id, newData) => {
-        setNodes(prevNodes => prevNodes.map(node =>
-            node.id === id ? { ...node, data: { ...node.data, ...newData }} : node
-        ));
-//        applyChanges(nodes, edges);
-        console.log('handleDataChange applied changes');
-    }, [setNodes]);
+        setNodes(prevNodes => prevNodes.map(node => {
+            if (node.id === id) {
+                // İlişkili edge'leri kontrol et ve gerekiyorsa güncelle
+                const oldData = node.data;
+                const oldSwitches = oldData.switches || [];
+                const newSwitches = newData.switches || [];
+
+                const removedSwitchIds = oldSwitches.filter(oldSw => !newSwitches.some(newSw => newSw.id === oldSw.id)).map(sw => sw.id);
+                setEdges(prevEdges => prevEdges.filter(edge => !removedSwitchIds.includes(edge.sourceHandle.replace('source-', ''))));
+
+                return { ...node, data: { ...node.data, ...newData } };
+            }
+            return node;
+        }));
+    }, [setNodes, setEdges]);
+
 
     function redraw() {
         setNodes([]);
@@ -348,15 +366,15 @@ export const Workflow = () => {
             <label htmlFor="upload-json">
                 <Button as="span" m={2}>Upload</Button>
             </label>
-            <Button onClick={handleDownload} >Download</Button>
+            <Button onClick={handleDownload}>Download</Button>
             <Button onClick={newDiagram} m={2}>New</Button>
-            <Button onClick={addNewNode} m={2}>+Qstn</Button>
-            <Button onClick={addPauseNode} m={2}>+Pause</Button>
-            <Button onClick={addCommandNode} m={2}>+Cmd</Button>
-            <Button onClick={addSwitchNode} m={2}>+Switch</Button>
+            <Button backgroundColor="#A3D8F4" onClick={addNewNode} m={2}>+Qstn</Button>
+            <Button backgroundColor="#B9E2C8" onClick={addPauseNode} m={2}>+Pause</Button>
+            <Button backgroundColor="#FFFACD" onClick={addCommandNode} m={2}>+Cmd</Button>
+            <Button backgroundColor="#F4C1D9" onClick={addSwitchNode} m={2}>+Switch</Button>
             <Button onClick={undo} m={2}>Undo</Button>
             <Button onClick={redo} m={2}>Redo</Button>
-            <label>Undo {currentHistoryIndex} of {history.length-1}</label>
+            <label>Undo {currentHistoryIndex} of {history.length - 1}</label>
             <ReactFlow
                 nodes={nodes.map(node => ({
                     ...node,

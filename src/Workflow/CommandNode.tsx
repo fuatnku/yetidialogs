@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { Handle, Position } from 'reactflow';
-import './custom-node.css';  // Var olan stilleri kullanabilirsiniz
+import React, {useState} from 'react';
+import {Handle, Position} from 'reactflow';
+import './custom-node.css';  // Use existing styles
 
 interface CommandNodeProps {
     id: string;
     data: {
         commands: string[];
-        onChange: (id: string, field: string, value: string[]) => void;
+        onChange: (id: string, commands: string[]) => void;
     };
 }
 
-const CommandNode: React.FC<CommandNodeProps> = ({ id, data }) => {
+const CommandNode: React.FC<CommandNodeProps> = ({id, data}) => {
     const [commands, setCommands] = useState(data.commands);
     const [editingIndex, setEditingIndex] = useState(-1);
     const [editValue, setEditValue] = useState('');
@@ -27,10 +27,10 @@ const CommandNode: React.FC<CommandNodeProps> = ({ id, data }) => {
     };
 
     const saveEdit = () => {
-        const newCommands = [...commands];
-        newCommands[editingIndex] = editValue;
-        setCommands(newCommands);
-        data.onChange(id, "commands", newCommands);
+        const updatedCommands = [...commands];
+        updatedCommands[editingIndex] = editValue;
+        setCommands(updatedCommands);
+        data.onChange(id, updatedCommands);
         setEditingIndex(-1);
     };
 
@@ -39,49 +39,47 @@ const CommandNode: React.FC<CommandNodeProps> = ({ id, data }) => {
     };
 
     const deleteCommand = (index: number) => {
-        const newCommands = commands.filter((_, i) => i !== index);
-        setCommands(newCommands);
-        data.onChange(id, "commands", newCommands);
+        const updatedCommands = commands.filter((_, i) => i !== index);
+        setCommands(updatedCommands);
+        data.onChange(id, updatedCommands);
     };
 
     return (
         <div className="custom-node">
-            <div className="node-header">ID: {id}</div>
-            <Handle
-                type="target"
-                position={Position.Left}
-                id="left-handle"
-                style={{ background: 'gray',width:10,height:10,transform: 'translateX(-50%)' }}
-            />
+            <div className="node-header-command">ID: {id}</div>
+            <Handle type="target" position={Position.Left} id="left-handle"
+                    style={{background: 'gray', width: 10, height: 10, transform: 'translateX(-50%)'}}/>
             <div className="node-content">
                 {commands.map((cmd, index) => (
                     editingIndex === index ? (
-                        <div key={index}>
-                            <textarea value={editValue} onChange={(e) => setEditValue(e.target.value)} />
-                            <button onClick={saveEdit}>✔️</button>
-                            <button onClick={cancelEdit}>❌</button>
-                            <button onClick={() => deleteCommand(index)}>🗑️</button>
+                        <div key={index} className="switch-container">
+                            <textarea
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                rows={2}
+                                className="node-answer-edit"
+                            />
                         </div>
                     ) : (
-                        <div key={index} onDoubleClick={() => startEdit(index)}>
+                        <div key={index} onDoubleClick={() => startEdit(index)} className="node-answer">
                             {cmd || "New command"}
                         </div>
                     )
                 ))}
-                <button onClick={addCommand} className="add-answer-button">Add</button>
+                {editingIndex !== -1 ? (
+                    <div className="edit-controls">
+                        <div className="edit-controls">
+                            <button onClick={saveEdit}>✔️</button>
+                            <button onClick={cancelEdit}>❌</button>
+                            <button onClick={() => deleteCommand(editingIndex)}>🗑️</button>
+                        </div>
+                    </div>
+                ) : (
+                    <button onClick={addCommand} className="add-answer-button">Add</button>
+                )}
             </div>
-            <Handle
-                type="source"
-                position={Position.Right}
-                style={{
-                    right: -10,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: 10,
-                    height: 10,
-                    background:  'gray',
-                }}
-            />
+            <Handle type="source" position={Position.Right} id="right-handle"
+                    style={{background: 'gray', width: 10, height: 10, transform: 'translateY(-50%)'}}/>
         </div>
     );
 };

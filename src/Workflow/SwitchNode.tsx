@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { Handle, Position } from 'reactflow';
 import './custom-node.css';
 
@@ -56,19 +56,23 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
         const updatedSwitches = switches.filter((_, i) => i !== index);
         setSwitches(updatedSwitches);
         data.onChange(id, updatedSwitches);
+        setEditingIndex(-1);
     };
 
     return (
         <div className="custom-node">
-            <div className="node-header">ID: {id}</div>
+            <div className="node-header-switch">ID: {id}</div>
             <Handle type="target" position={Position.Left} id="left-handle" style={{ background: 'gray', width: 10, height: 10, transform: 'translateX(-50%)' }} />
             <div className="node-content">
                 {switches.map((sw, index) => (
                     <div key={index} className="switch-container">
                         {editingIndex === index ? (
-                            <div>
-                                <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)} />
-                              </div>
+                            <textarea
+                                value={editText}
+                                onChange={(e) => setEditText(e.target.value)}
+                                rows={2}  // Satır sayısını belirleyin
+                                className="node-answer-edit"  // CustomNode'da kullanılan CSS sınıfını uygulayın
+                            />
                         ) : (
                             <div onDoubleClick={() => startEdit(index)}>
                                 {sw.text || "New switch"}
@@ -77,11 +81,14 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
                         <Handle
                             type="source"
                             position={Position.Right}
-                            id={`source-${index}`}
+                            id={`choice-${index}`}
                             style={{
-                                top: `${(index + 1) * (100 / (switches.length + 1))}%`,
+                                right: -10,
+                                top: '50%',
                                 transform: 'translateY(-50%)',
-                                background: 'gray', width: 10, height: 10
+                                width: 10,
+                                height: 10,
+                                background: 'gray'
                             }}
                         />
                     </div>
@@ -91,10 +98,10 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
                         <button onClick={saveEdit}>✔️</button>
                         <button onClick={cancelEdit}>❌</button>
                         <button onClick={() => deleteSwitch(editingIndex)}>🗑️</button>
-                    </div>): (
-                        <button onClick={addSwitch} className="add-answer-button">Add</button>
-        )
-                }
+                    </div>
+                ) : (
+                    <button onClick={addSwitch} className="add-answer-button">Add</button>
+                )}
             </div>
         </div>
     );

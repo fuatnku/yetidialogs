@@ -45,14 +45,6 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
         setLanguage(prev => (prev === 'en' ? 'tr' : 'en'));
     };
 
-    const showNodeDetails = () => {
-        alert(`ID: ${id}
-        Question: ${JSON.stringify(question, null, 2)}
-        Answers: ${JSON.stringify(answers, null, 2)}
-        isRandomOrder: ${JSON.stringify(isRandomOrder, null, 2)}
-        isIconNode: ${JSON.stringify(isIconNode, null, 2)}`);
-    };
-
     const addAnswer = () => {
         const newAnswer = { text: { en: "New answer", tr: "Yeni cevap" }, connect: "" };
         const newAnswers = [...answers, newAnswer];
@@ -108,9 +100,8 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
     return (
         <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
             <div className="node-header-custom">
-                <button onClick={handleLanguageToggle}>{language.toUpperCase()}</button>
-                <button onClick={showNodeDetails}>?</button>
-                <span>ID: {id}</span>
+                <button onClick={handleLanguageToggle}>Question Node - {language.toUpperCase()}</button>
+                <span className="node-id">ID: {id}</span>
             </div>
             <Handle
                 type="target"

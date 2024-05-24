@@ -61,7 +61,10 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
 
     return (
         <div className="custom-node">
-            <div className="node-header-switch">ID: {id}</div>
+            <div className="node-header-switch">
+                <span>Switch Node</span>
+                <span className="node-id">ID: {id}</span>
+            </div>
             <Handle type="target" position={Position.Left} id="left-handle" style={{ background: 'gray', width: 10, height: 10, transform: 'translateX(-50%)' }} />
             <div className="node-content">
                 {switches.map((sw, index) => (

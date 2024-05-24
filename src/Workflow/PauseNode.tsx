@@ -35,13 +35,14 @@ const PauseNode: React.FC<PauseNodeProps> = ({ id, data }) => {
     return (
         <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
             <div className="node-header-pause">
-                <span>ID: {id}</span>
+                <span>Pause Node</span>
+                <span className="node-id">ID: {id}</span>
             </div>
             <Handle
                 type="target"
                 position={Position.Left}
                 id="left-handle"
-                style={{ background: 'gray',width:10,height:10,transform: 'translateX(-50%)' }}
+                style={{background: 'gray', width: 10, height: 10, transform: 'translateX(-50%)'}}
             />
             {editing ? (
                 <div>
@@ -68,7 +69,7 @@ const PauseNode: React.FC<PauseNodeProps> = ({ id, data }) => {
                     transform: 'translateY(-50%)',
                     width: 10,
                     height: 10,
-                    background:  'gray',
+                    background: 'gray',
                 }}
             />
         </div>

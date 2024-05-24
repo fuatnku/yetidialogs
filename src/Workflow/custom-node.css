@@ -204,3 +204,10 @@
 .button-switch {
     background-color: #F4C1D9;
 }
+
+.node-id {
+    color: #918f8f; /* Silik gri renk */
+    font-size: 8px; /* Küçük yazı tipi */
+    font-style: italic; /* İtalik yazı tipi, isteğe bağlı */
+
+}

@@ -1,4 +1,4 @@
-import React, {useEffect, useCallback, useState} from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import ReactFlow, {
     addEdge,
     Background,
@@ -10,8 +10,8 @@ import ReactFlow, {
     NodeDragStopEvent,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import {Box, Button} from '@chakra-ui/react';
-import {initialEdges, initialNodes} from './Workflow.constants';
+import { Box, Button } from '@chakra-ui/react';
+import { initialEdges, initialNodes } from './Workflow.constants';
 import DevTools from './Devtools';
 import './style.css';
 
@@ -36,51 +36,41 @@ const nodeTypes = {
 const defaultNode = {
     id: 'new-node',
     type: 'customNode',
-    position: {x: 250, y: 5},
-    data: {label: 'New Node'}
+    position: { x: 250, y: 5 },
+    data: { label: 'New Node' }
 };
-
 
 export const Workflow = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-    const [viewDevTools, setViewDevTools] = React.useState(false);
+    const [viewDevTools, setViewDevTools] = useState(false);
 
-    const [history, setHistory] = useState([{nodes: initialNodes, edges: initialEdges}]);
+    const [history, setHistory] = useState([{ nodes: initialNodes, edges: initialEdges }]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
     const { language, toggleLanguage } = useLanguage(); // Use language from context
 
-
     const applyChanges = (newNodes, newEdges) => {
-        const newHistory = history.slice(0, currentHistoryIndex + 1); // Mevcut indeksten sonraki geçmişi temizle
-        newHistory.push({nodes: newNodes, edges: newEdges});
+        const newHistory = history.slice(0, currentHistoryIndex + 1);
+        newHistory.push({ nodes: newNodes, edges: newEdges });
         setHistory(newHistory);
         setCurrentHistoryIndex(newHistory.length - 1);
     };
 
     const undo = () => {
         if (currentHistoryIndex > 0) {
-            setCurrentHistoryIndex(currentHistoryIndex - 1);
             const historyState = history[currentHistoryIndex - 1];
-            setNodes([]);
-            setEdges([]);
-            setTimeout(() => {
-                setNodes(historyState.nodes);
-                setEdges(historyState.edges);
-            }, 0);
+            setCurrentHistoryIndex(currentHistoryIndex - 1);
+            setNodes(historyState.nodes);
+            setEdges(historyState.edges);
         }
     };
 
     const redo = () => {
         if (currentHistoryIndex < history.length - 1) {
-            setCurrentHistoryIndex(currentHistoryIndex + 1);
             const historyState = history[currentHistoryIndex + 1];
-            setNodes([]);
-            setEdges([]);
-            setTimeout(() => {
-                setNodes(historyState.nodes);
-                setEdges(historyState.edges);
-            }, 0);
+            setCurrentHistoryIndex(currentHistoryIndex + 1);
+            setNodes(historyState.nodes);
+            setEdges(historyState.edges);
         }
     };
 
@@ -91,12 +81,8 @@ export const Workflow = () => {
             try {
                 const parsedNodes = JSON.parse(loadedNodes);
                 const parsedEdges = JSON.parse(loadedEdges);
-                setNodes([]);
-                setEdges([]);
-                setTimeout(() => {
-                    setNodes(parsedNodes);
-                    setEdges(parsedEdges);
-                }, 0);
+                setNodes(parsedNodes);
+                setEdges(parsedEdges);
                 applyChanges(parsedNodes, parsedEdges);
             } catch (error) {
                 console.error("Parsing error: ", error);
@@ -110,92 +96,67 @@ export const Workflow = () => {
     }, [nodes, edges]);
 
     const onConnect = useCallback((connection: Connection) => {
-        setEdges((prevEdges) => {
-            // Eski bağlantıları id üzerinden filtrele
-            const filteredEdges = prevEdges.filter(
-                edge => !(edge.source === connection.source && edge.sourceHandle === connection.sourceHandle)
-            );
+        const newEdge = {
+            ...connection,
+            animated: true,
+            id: `${connection.source}-${connection.sourceHandle}`,
+            type: 'customEdge',
+        };
+        const newEdges = addEdge(newEdge, edges);
+        setEdges(newEdges);
+        applyChanges(nodes, newEdges);
+    }, [nodes, edges, setEdges]);
 
-            // Yeni bağlantıyı id ile oluştur
-            const newEdge = {
-                ...connection,
-                animated: true,
-                id: `${connection.source}-${connection.sourceHandle}`,  // Benzersiz ID atama
-                type: 'customEdge',
-            };
+    const onNodesChangeWrapper = useCallback((changes) => {
+        onNodesChange(changes);
+        applyChanges(changes, edges);
+    }, [edges, onNodesChange]);
 
-            return addEdge(newEdge, filteredEdges);
-        });
-        applyChanges(nodes, edges);
-    }, [nodes, edges, setEdges, setNodes, applyChanges]);
+    const onEdgesChangeWrapper = useCallback((changes) => {
+        onEdgesChange(changes);
+        applyChanges(nodes, changes);
+    }, [nodes, onEdgesChange]);
 
-    const onNodeDragStop = useCallback(
-        (event: NodeDragStopEvent, node: Node) => {
-            const roundedPositions = nodes.map(n => ({
-                ...n,
-                position: {x: Math.round(n.position.x), y: Math.round(n.position.y)}
-            }));
-            setNodes(roundedPositions);
-            applyChanges(roundedPositions, edges);
-            localStorage.setItem('workflowNodes', JSON.stringify(roundedPositions));
-        },
-        [nodes, setNodes]
-    );
+    const onNodeDragStop = useCallback((event: NodeDragStopEvent, node: Node) => {
+        const roundedPositions = nodes.map(n => ({
+            ...n,
+            position: { x: Math.round(n.position.x), y: Math.round(n.position.y) }
+        }));
+        setNodes(roundedPositions);
+        applyChanges(roundedPositions, edges);
+    }, [nodes, setNodes, edges]);
 
     const exportWorkflow = useCallback(() => {
         const nodeData = nodes.map(node => {
-            // Bu node'dan çıkan tüm bağlantıları bul
             const outgoingEdges = edges.filter(edge => edge.source === node.id);
-
-            const commonData = {
-                id: node.id,
-            };
+            const commonData = { id: node.id };
 
             switch (node.type) {
                 case 'pauseNode':
-                    // Pause node için tek bir bağlantı al
                     const pauseConnect = outgoingEdges.length > 0 ? outgoingEdges[0].target : null;
-                    return {
-                        ...commonData,
-                        pause: node.data.pause,
-                        connect: pauseConnect
-                    };
+                    return { ...commonData, pause: node.data.pause, connect: pauseConnect };
                 case 'commandNode':
-                    // Command node için tüm komutları array olarak ekle ve tek bir bağlantı al
                     const commandConnect = outgoingEdges.length > 0 ? outgoingEdges[0].target : null;
-                    return {
-                        ...commonData,
-                        commands: node.data.commands,
-                        connect: commandConnect
-                    };
+                    return { ...commonData, commands: node.data.commands, connect: commandConnect };
                 case 'switchNode':
-                    // Switch node için tüm switch'leri array olarak ekle ve her switch için bağlantı al
                     const switches = node.data.switches.map((sw, index) => {
                         const connection = outgoingEdges.find(edge => edge.sourceHandle === `source-${index}`);
                         return { ...sw, connect: connection ? connection.target : null };
                     });
-                    return {
-                        ...commonData,
-                        switches,
-                    };
+                    return { ...commonData, switches };
                 case 'customNode':
-                    // Custom node için tüm cevapları array olarak ekle ve her cevap için bağlantı al
                     const answers = node.data.answers.map((answer, index) => {
                         const connection = outgoingEdges.find(edge => edge.sourceHandle === `choice-${index}`);
                         return { ...answer, connect: connection ? connection.target : null };
                     });
-                    return {
-                        ...commonData,
-                        question: node.data.question,
-                        answers,
-                    };
+                    return { ...commonData, question: node.data.question, answers };
                 default:
                     return commonData;
             }
         });
 
         const data = JSON.stringify(nodeData, null, 2);
-        const blob = new Blob([data], {type: 'application/json'});
+        const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -205,12 +166,9 @@ export const Workflow = () => {
     }, [nodes, edges]);
 
     const saveToFile = useCallback(() => {
-        const workflowData = {
-            nodes,
-            edges
-        };
+        const workflowData = { nodes, edges };
         const data = JSON.stringify(workflowData, null, 2);
-        const blob = new Blob([data], {type: 'application/json'});
+        const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -226,12 +184,9 @@ export const Workflow = () => {
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    setNodes([]);
-                    setEdges([]);
-                    setTimeout(() => {
-                        setNodes(data.nodes || []);
-                        setEdges(data.edges || []);
-                    }, 0);
+                    setNodes(data.nodes || []);
+                    setEdges(data.edges || []);
+                    applyChanges(data.nodes || [], data.edges || []);
                 } catch (error) {
                     console.error("File parsing error: ", error);
                 }
@@ -242,12 +197,9 @@ export const Workflow = () => {
 
     const newDiagram = useCallback(() => {
         if (window.confirm('Are you sure you want to start a new diagram? This will erase the current diagram.')) {
-            setNodes([]);
-            setEdges([]);
-            setTimeout(() => {
-                setNodes(initialNodes);
-                setEdges(initialEdges);
-            }, 0);
+            setNodes(initialNodes);
+            setEdges(initialEdges);
+            applyChanges(initialNodes, initialEdges);
         }
     }, [setNodes, setEdges]);
 
@@ -255,60 +207,59 @@ export const Workflow = () => {
         const newNode = {
             ...defaultNode,
             id: `Q${Math.floor(Math.random() * 9000000) + 1000000}`,
-            position: {x: Math.random() * 250, y: Math.random() * 250}
+            position: { x: Math.random() * 250, y: Math.random() * 250 }
         };
-        //add new node to the nodes array
         const newNodeStates = [...nodes, newNode];
         setNodes(newNodeStates);
         applyChanges(newNodeStates, edges);
-    }, [nodes, setNodes]);
+    }, [nodes, setNodes, edges]);
 
     const addPauseNode = useCallback(() => {
         const newNode = {
             id: `P${Math.floor(Math.random() * 9000000) + 1000000}`,
             type: 'pauseNode',
-            position: {x: Math.random() * 250, y: Math.random() * 250},
-            data: {pause: 'Pause text'}
+            position: { x: Math.random() * 250, y: Math.random() * 250 },
+            data: { pause: 'Pause text' }
         };
         const newNodes = [...nodes, newNode];
         setNodes(newNodes);
         applyChanges(newNodes, edges);
-    }, [nodes, setNodes]);
+    }, [nodes, setNodes, edges]);
 
     const addCommandNode = useCallback(() => {
         const newNode = {
             id: `C${Math.floor(Math.random() * 9000000) + 1000000}`,
             type: 'commandNode',
-            position: {x: Math.random() * 250, y: Math.random() * 250},
-            data: {commands: ["Enter command line"]}
+            position: { x: Math.random() * 250, y: Math.random() * 250 },
+            data: { commands: ["Enter command line"] }
         };
         const newNodes = [...nodes, newNode];
         setNodes(newNodes);
         applyChanges(newNodes, edges);
-    }, [nodes, setNodes]);
+    }, [nodes, setNodes, edges]);
 
     const addSwitchNode = useCallback(() => {
         const newNode = {
             id: `S${Math.floor(Math.random() * 9000000) + 1000000}`,
             type: 'switchNode',
-            position: {x: Math.random() * 250, y: Math.random() * 250},
-            data: {switches: [{text: 'Switch text', connect: ''}]}
+            position: { x: Math.random() * 250, y: Math.random() * 250 },
+            data: { switches: [{ text: 'Switch text', connect: '' }] }
         };
         const newNodes = [...nodes, newNode];
         setNodes(newNodes);
         applyChanges(newNodes, edges);
-    }, [nodes, setNodes]);
+    }, [nodes, setNodes, edges]);
 
     const handleNodeChange = useCallback((id, field, value) => {
         setNodes(prevNodes => prevNodes.map(node =>
-            node.id === id ? {...node, data: {...node.data, [field]: value}} : node
+            node.id === id ? { ...node, data: { ...node.data, [field]: value } } : node
         ));
-    }, [setNodes]);
+        applyChanges(nodes, edges);
+    }, [nodes, setNodes, edges]);
 
     const handleDataChange = useCallback((id, newData) => {
         setNodes(prevNodes => prevNodes.map(node => {
             if (node.id === id) {
-                // İlişkili edge'leri kontrol et ve gerekiyorsa güncelle
                 const oldData = node.data;
                 const oldSwitches = oldData.switches || [];
                 const newSwitches = newData.switches || [];
@@ -320,33 +271,24 @@ export const Workflow = () => {
             }
             return node;
         }));
-    }, [setNodes, setEdges]);
-
-
-    function redraw() {
-        setNodes([]);
-        setEdges([]);
-        setTimeout(() => {
-            setNodes(nodes);
-            setEdges(edges);
-        }, 0);
-    }
+        applyChanges(nodes, edges);
+    }, [nodes, setNodes, setEdges, edges]);
 
     return (
         <Box height={'90vh'} width={'100vw'}>
-            <Button onClick={redraw} m={2}>Redraw</Button>
+            <Button onClick={() => setNodes([]) & setEdges([]) & setNodes(nodes) & setEdges(edges)} m={2}>Redraw</Button>
             <input
                 type="file"
                 accept=".json"
                 onChange={loadFromFile}
-                style={{display: 'none'}}
+                style={{ display: 'none' }}
                 id="load-file"
             />
             <label htmlFor="load-file">
                 <Button as="span" m={2}>Load</Button>
             </label>
             <Button onClick={saveToFile} m={2}>Save</Button>
-            <Button onClick={exportWorkflow}>Export</Button>
+            <Button onClick={exportWorkflow} m={2}>Export</Button>
             <Button onClick={toggleLanguage} m={2}>Lang {language}</Button>
             <Button onClick={newDiagram} m={2}>New</Button>
             <Button backgroundColor="#A3D8F4" onClick={addNewNode} m={2}>+Qstn</Button>
@@ -369,8 +311,8 @@ export const Workflow = () => {
                     }
                 }))}
                 edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
+                onNodesChange={onNodesChangeWrapper}
+                onEdgesChange={onEdgesChangeWrapper}
                 onConnect={onConnect}
                 onNodeDragStop={onNodeDragStop}
                 nodeTypes={nodeTypes}
@@ -379,9 +321,9 @@ export const Workflow = () => {
                 snapGrid={[20, 20]}
                 fitView
             >
-                {viewDevTools && <DevTools/>}
-                <Background/>
-                <Controls/>
+                {viewDevTools && <DevTools />}
+                <Background />
+                <Controls />
             </ReactFlow>
         </Box>
     );

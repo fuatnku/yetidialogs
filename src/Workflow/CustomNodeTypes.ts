@@ -1,4 +1,3 @@
-// CustomNodeTypes.ts
 import { NodeProps as ReactFlowNodeProps } from "reactflow";
 
 export interface CustomNodeProps {
@@ -6,12 +5,17 @@ export interface CustomNodeProps {
 }
 
 export interface Node extends ReactFlowNodeProps {
-    tr: string;
-    en: string;
-    question?: TranslatedText;
-    answers?: Answer[];
-    isRandomOrder?: RandomOrder;
-    isIconNode?: IconNode;
+    id: string;
+    type: 'customNode';
+    position: { x: number; y: number };
+    data: {
+        tr: string;
+        en: string;
+        question?: TranslatedText;
+        answers?: Answer[];
+        isRandomOrder?: boolean;
+        isIconNode?: boolean;
+    };
 }
 
 export interface TranslatedText {
@@ -22,12 +26,4 @@ export interface TranslatedText {
 export interface Answer {
     text: TranslatedText;
     connect?: string;
-}
-
-export interface RandomOrder {
-    isRandomOrder: boolean;
-}
-
-export interface IconNode {
-    isIconNode: boolean;
 }

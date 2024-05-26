@@ -13,7 +13,6 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { Box, Button } from '@chakra-ui/react';
 import { initialEdges, initialNodes } from './Workflow.constants';
-import DevTools from './Devtools';
 import './style.css';
 
 import SwitchNode from './SwitchNode';
@@ -44,7 +43,6 @@ const defaultNode = {
 export const Workflow = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-    const [viewDevTools, setViewDevTools] = useState(false);
 
     const [history, setHistory] = useState([{ nodes: initialNodes, edges: initialEdges }]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
@@ -57,12 +55,16 @@ export const Workflow = () => {
         setCurrentHistoryIndex(newHistory.length - 1);
     };
 
+    const applyHistoryState = (historyState) => {
+        setNodes(historyState.nodes);
+        setEdges(historyState.edges);
+    };
+
     const undo = () => {
         if (currentHistoryIndex > 0) {
             const historyState = history[currentHistoryIndex - 1];
             setCurrentHistoryIndex(currentHistoryIndex - 1);
-            setNodes(historyState.nodes);
-            setEdges(historyState.edges);
+            applyHistoryState(historyState);
         }
     };
 
@@ -70,10 +72,10 @@ export const Workflow = () => {
         if (currentHistoryIndex < history.length - 1) {
             const historyState = history[currentHistoryIndex + 1];
             setCurrentHistoryIndex(currentHistoryIndex + 1);
-            setNodes(historyState.nodes);
-            setEdges(historyState.edges);
+            applyHistoryState(historyState);
         }
     };
+
 
     useEffect(() => {
         const loadedNodes = localStorage.getItem('workflowNodes');
@@ -100,22 +102,28 @@ export const Workflow = () => {
         const newEdge = {
             ...connection,
             animated: true,
-            id: `${connection.source}-${connection.sourceHandle}`,
+            id: `${connection.source}-${connection.sourceHandle}-${connection.target}`,
             type: 'customEdge',
         };
-        const newEdges = addEdge(newEdge, edges);
+
+        // Remove existing edge from the same source handle
+        const existingEdges = edges.filter(edge => edge.source === connection.source && edge.sourceHandle === connection.sourceHandle);
+
+        // Create the new edges list with the new edge added
+        const newEdges = addEdge(newEdge, edges.filter(edge => !existingEdges.includes(edge)));
+
         setEdges(newEdges);
         applyChanges(nodes, newEdges);
     }, [nodes, edges, setEdges]);
 
     const onNodesChangeWrapper = useCallback((changes) => {
         onNodesChange(changes);
-        applyChanges(changes, edges);
+//        applyChanges(changes, edges);
     }, [edges, onNodesChange]);
 
     const onEdgesChangeWrapper = useCallback((changes) => {
         onEdgesChange(changes);
-        applyChanges(nodes, changes);
+//        applyChanges(nodes, changes);
     }, [nodes, onEdgesChange]);
 
     const onNodeDragStop = useCallback((event: NodeDragStopEvent, node: Node) => {
@@ -330,6 +338,10 @@ export const Workflow = () => {
                 maxZoom={4} // Set the maximum zoom level
             >
                 <MiniMap
+                    pannable
+                    zoomable={true}
+                    zoomStep={0.5}
+                    nodeStrokeWidth={3}
                     nodeColor={node => {
                         switch (node.type) {
                             case 'pauseNode': return '#B9E2C8';
@@ -340,7 +352,6 @@ export const Workflow = () => {
                         }
                     }}
                 />
-                {viewDevTools && <DevTools />}
                 <Background />
                 <Controls />
             </ReactFlow>

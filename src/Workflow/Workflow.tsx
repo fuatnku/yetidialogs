@@ -332,10 +332,10 @@ export const Workflow = () => {
                 <MiniMap
                     nodeColor={node => {
                         switch (node.type) {
-                            case 'pauseNode': return '#FFCC00';
-                            case 'commandNode': return '#00CCFF';
-                            case 'switchNode': return '#CC00FF';
-                            case 'customNode': return '#FF007F';
+                            case 'pauseNode': return '#B9E2C8';
+                            case 'commandNode': return '#FFFACD';
+                            case 'switchNode': return '#F4C1D9';
+                            case 'customNode': return '#A3D8F4';
                             default: return '#eee';
                         }
                     }}

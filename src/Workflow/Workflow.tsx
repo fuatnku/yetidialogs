@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import ReactFlow, {
     addEdge,
     Background,
@@ -43,12 +43,16 @@ const defaultNode = {
 export const Workflow = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
     const [history, setHistory] = useState([{ nodes: initialNodes, edges: initialEdges }]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
     const { language, toggleLanguage } = useLanguage(); // Use language from context
 
+    const isUndoRedo = useRef(false); // Bayrak
+    const isProgrammaticChange = useRef(false); // Programatik değişiklik bayrağı
+
     const applyChanges = (newNodes, newEdges) => {
+        if (isProgrammaticChange.current) return;
+        console.log("changes applied");
         const newHistory = history.slice(0, currentHistoryIndex + 1);
         newHistory.push({ nodes: newNodes, edges: newEdges });
         setHistory(newHistory);
@@ -56,8 +60,12 @@ export const Workflow = () => {
     };
 
     const applyHistoryState = (historyState) => {
+        console.log("applyChanges from applyHistoryState function");
+        isUndoRedo.current = true; // Undo veya Redo işlemi yapılıyor
+        isProgrammaticChange.current = true;
         setNodes(historyState.nodes);
         setEdges(historyState.edges);
+        isProgrammaticChange.current = false;
     };
 
     const undo = () => {
@@ -76,6 +84,14 @@ export const Workflow = () => {
         }
     };
 
+    useEffect(() => {
+        if (isUndoRedo.current) {
+            isUndoRedo.current = false; // Undo veya Redo işlemi tamamlandı
+            return;
+        }
+        localStorage.setItem('workflowNodes', JSON.stringify(nodes));
+        localStorage.setItem('workflowEdges', JSON.stringify(edges));
+    }, [nodes, edges]);
 
     useEffect(() => {
         const loadedNodes = localStorage.getItem('workflowNodes');
@@ -84,19 +100,17 @@ export const Workflow = () => {
             try {
                 const parsedNodes = JSON.parse(loadedNodes);
                 const parsedEdges = JSON.parse(loadedEdges);
+                isProgrammaticChange.current = true;
                 setNodes(parsedNodes);
                 setEdges(parsedEdges);
+                isProgrammaticChange.current = false;
+                console.log("applyChanges from useEffect for localStorage load");
                 applyChanges(parsedNodes, parsedEdges);
             } catch (error) {
                 console.error("Parsing error: ", error);
             }
         }
     }, []);
-
-    useEffect(() => {
-        localStorage.setItem('workflowNodes', JSON.stringify(nodes));
-        localStorage.setItem('workflowEdges', JSON.stringify(edges));
-    }, [nodes, edges]);
 
     const onConnect = useCallback((connection: Connection) => {
         const newEdge = {
@@ -113,17 +127,18 @@ export const Workflow = () => {
         const newEdges = addEdge(newEdge, edges.filter(edge => !existingEdges.includes(edge)));
 
         setEdges(newEdges);
+        console.log("applyChanges from onConnect function");
         applyChanges(nodes, newEdges);
     }, [nodes, edges, setEdges]);
 
     const onNodesChangeWrapper = useCallback((changes) => {
+        if (isProgrammaticChange.current) return; // Programatik değişiklik sırasında tetiklenmemesi için kontrol
         onNodesChange(changes);
-//        applyChanges(changes, edges);
     }, [edges, onNodesChange]);
 
     const onEdgesChangeWrapper = useCallback((changes) => {
+        if (isProgrammaticChange.current) return; // Programatik değişiklik sırasında tetiklenmemesi için kontrol
         onEdgesChange(changes);
-//        applyChanges(nodes, changes);
     }, [nodes, onEdgesChange]);
 
     const onNodeDragStop = useCallback((event: NodeDragStopEvent, node: Node) => {
@@ -131,7 +146,10 @@ export const Workflow = () => {
             ...n,
             position: { x: Math.round(n.position.x), y: Math.round(n.position.y) }
         }));
+        isProgrammaticChange.current = true;
         setNodes(roundedPositions);
+        isProgrammaticChange.current = false;
+        console.log("applyChanges from onNodeDragStop function");
         applyChanges(roundedPositions, edges);
     }, [nodes, setNodes, edges]);
 
@@ -193,8 +211,11 @@ export const Workflow = () => {
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
+                    isProgrammaticChange.current = true;
                     setNodes(data.nodes || []);
                     setEdges(data.edges || []);
+                    isProgrammaticChange.current = false;
+                    console.log("applyChanges from loadFromFile function");
                     applyChanges(data.nodes || [], data.edges || []);
                 } catch (error) {
                     console.error("File parsing error: ", error);
@@ -206,8 +227,11 @@ export const Workflow = () => {
 
     const newDiagram = useCallback(() => {
         if (window.confirm('Are you sure you want to start a new diagram? This will erase the current diagram.')) {
+            isProgrammaticChange.current = true;
             setNodes(initialNodes);
             setEdges(initialEdges);
+            isProgrammaticChange.current = false;
+            console.log("applyChanges from newDiagram function");
             applyChanges(initialNodes, initialEdges);
         }
     }, [setNodes, setEdges]);
@@ -218,8 +242,11 @@ export const Workflow = () => {
             id: `Q${Math.floor(Math.random() * 9000000) + 1000000}`,
             position: { x: Math.random() * 250, y: Math.random() * 250 }
         };
+        isProgrammaticChange.current = true;
         const newNodeStates = [...nodes, newNode];
         setNodes(newNodeStates);
+        isProgrammaticChange.current = false;
+        console.log("applyChanges from addNewNode function");
         applyChanges(newNodeStates, edges);
     }, [nodes, setNodes, edges]);
 
@@ -230,8 +257,11 @@ export const Workflow = () => {
             position: { x: Math.random() * 250, y: Math.random() * 250 },
             data: { pause: 'Pause text' }
         };
+        isProgrammaticChange.current = true;
         const newNodes = [...nodes, newNode];
         setNodes(newNodes);
+        isProgrammaticChange.current = false;
+        console.log("applyChanges from addPauseNode function");
         applyChanges(newNodes, edges);
     }, [nodes, setNodes, edges]);
 
@@ -242,8 +272,11 @@ export const Workflow = () => {
             position: { x: Math.random() * 250, y: Math.random() * 250 },
             data: { commands: ["Enter command line"] }
         };
+        isProgrammaticChange.current = true;
         const newNodes = [...nodes, newNode];
         setNodes(newNodes);
+        isProgrammaticChange.current = false;
+        console.log("applyChanges from addCommandNode function");
         applyChanges(newNodes, edges);
     }, [nodes, setNodes, edges]);
 
@@ -254,19 +287,25 @@ export const Workflow = () => {
             position: { x: Math.random() * 250, y: Math.random() * 250 },
             data: { switches: [{ text: 'Switch text', connect: '' }] }
         };
+        isProgrammaticChange.current = true;
         const newNodes = [...nodes, newNode];
         setNodes(newNodes);
+        isProgrammaticChange.current = false;
+        console.log("applyChanges from addSwitchNode function");
         applyChanges(newNodes, edges);
     }, [nodes, setNodes, edges]);
 
     const handleNodeChange = useCallback((id, field, value) => {
+        if (isUndoRedo.current || isProgrammaticChange.current) return; // Undo veya Redo sırasında tetiklenmemesi için kontrol
         setNodes(prevNodes => prevNodes.map(node =>
             node.id === id ? { ...node, data: { ...node.data, [field]: value } } : node
         ));
-        applyChanges(nodes, edges);
+//        console.log("applyChanges from handleNodeChange function");
+//        applyChanges(nodes, edges);
     }, [nodes, setNodes, edges]);
 
     const handleDataChange = useCallback((id, newData) => {
+        if (isUndoRedo.current || isProgrammaticChange.current) return; // Undo veya Redo sırasında tetiklenmemesi için kontrol
         setNodes(prevNodes => prevNodes.map(node => {
             if (node.id === id) {
                 const oldData = node.data;
@@ -285,7 +324,8 @@ export const Workflow = () => {
             }
             return node;
         }));
-        applyChanges(nodes, edges);
+//        console.log("applyChanges from handleDataChange function");
+//        applyChanges(nodes, edges);
     }, [nodes, setNodes, setEdges, edges]);
 
     return (

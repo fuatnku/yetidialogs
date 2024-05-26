@@ -8,6 +8,7 @@ import ReactFlow, {
     Node,
     Connection,
     NodeDragStopEvent,
+    MiniMap,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Box, Button } from '@chakra-ui/react';
@@ -264,8 +265,13 @@ export const Workflow = () => {
                 const oldSwitches = oldData.switches || [];
                 const newSwitches = newData.switches || [];
 
-                const removedSwitchIds = oldSwitches.filter(oldSw => !newSwitches.some(newSw => newSw.id === oldSw.id)).map(sw => sw.id);
-                setEdges(prevEdges => prevEdges.filter(edge => !removedSwitchIds.includes(edge.sourceHandle.replace('source-', ''))));
+                const removedSwitchIds = oldSwitches
+                    .filter(oldSw => !newSwitches.some(newSw => newSw.id === oldSw.id))
+                    .map(sw => sw.id);
+                setEdges(prevEdges => prevEdges.filter(edge => {
+                    const sourceHandleId = edge.sourceHandle ? edge.sourceHandle.replace('source-', '') : null;
+                    return !removedSwitchIds.includes(sourceHandleId);
+                }));
 
                 return { ...node, data: { ...node.data, ...newData } };
             }
@@ -320,7 +326,20 @@ export const Workflow = () => {
                 snapToGrid
                 snapGrid={[20, 20]}
                 fitView
+                minZoom={0.1} // Set the minimum zoom level
+                maxZoom={4} // Set the maximum zoom level
             >
+                <MiniMap
+                    nodeColor={node => {
+                        switch (node.type) {
+                            case 'pauseNode': return '#FFCC00';
+                            case 'commandNode': return '#00CCFF';
+                            case 'switchNode': return '#CC00FF';
+                            case 'customNode': return '#FF007F';
+                            default: return '#eee';
+                        }
+                    }}
+                />
                 {viewDevTools && <DevTools />}
                 <Background />
                 <Controls />

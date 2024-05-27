@@ -29,7 +29,7 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
         }
     }, [switches]);
 
-    const generateSwitchId = () => `sn${Math.random().toString(36).substr(2, 9)}`;
+    const generateSwitchId = () => `switch-${Math.random().toString(36).substring(2, 11)}`;
 
     const addSwitch = () => {
         const newSwitches = [...switches, { id: generateSwitchId(), text: '', connect: '' }];

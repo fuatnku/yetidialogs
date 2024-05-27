@@ -1,9 +1,17 @@
-//CustomNode.tsx
 import React, { useState, useEffect, MouseEvent } from 'react';
 import { Handle, Position, useOnSelectionChange } from 'reactflow';
 import { useLanguage } from './LanguageContext'; // Import the useLanguage hook
 import { Node } from './CustomNodeTypes';
 import './custom-node.css';
+
+interface Answer {
+    id: string;
+    text: {
+        en: string;
+        tr: string;
+    };
+    connect: string;
+}
 
 interface CustomNodeComponentProps {
     id: string;
@@ -28,7 +36,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
         en: "Here, enter a question",
         tr: "Buraya bir soru girin"
     });
-    const [answers, setAnswers] = useState(data.answers || []);
+    const [answers, setAnswers] = useState<Answer[]>(data.answers || []);
     const [isRandomOrder, setIsRandomOrder] = useState(data.isRandomOrder || false);
     const [isIconNode, setIsIconNode] = useState(data.isIconNode || false);
     const [editing, setEditing] = useState(false);
@@ -37,12 +45,14 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
 
     useEffect(() => {
         if (data.onDataChange) {
-            data.onDataChange(id, { question, answers, isRandomOrder, isIconNode});
+            data.onDataChange(id, { question, answers, isRandomOrder, isIconNode });
         }
     }, [question, answers, isRandomOrder, isIconNode]);
 
+    const generateAnswerId = () => `answer-${Math.random().toString(36).substring(2, 11)}`;
+
     const addAnswer = () => {
-        const newAnswer = { text: { en: "New answer", tr: "Yeni cevap" }, connect: "" };
+        const newAnswer = { id: generateAnswerId(), text: { en: "New answer", tr: "Yeni cevap" }, connect: "" };
         const newAnswers = [...answers, newAnswer];
         setAnswers(newAnswers);
         data.onChange(id, 'answers', newAnswers);
@@ -120,7 +130,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                     </div>
                 )}
                 {answers.map((answer, index) => (
-                    <div key={index} className="node-answer-container">
+                    <div key={answer.id} className="node-answer-container">
                         {editing && editingIndex === index ? (
                             <div className="node-answer-edit-container">
                                 <textarea
@@ -141,7 +151,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                                 <Handle
                                     type="source"
                                     position={Position.Right}
-                                    id={`choice-${index}`}
+                                    id={answer.id}
                                     style={{
                                         right: -10,
                                         top: '50%',

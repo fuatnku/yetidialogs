@@ -3,6 +3,7 @@ import { Handle, Position } from 'reactflow';
 import './custom-node.css';
 
 interface Switch {
+    id: string;  // ID alanı ekleniyor
     text: string;
     connect: string;
 }
@@ -17,7 +18,7 @@ interface SwitchNodeProps {
 }
 
 const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
-    const [switches, setSwitches] = useState(data.switches);
+    const [switches, setSwitches] = useState<Switch[]>(data.switches || []);
     const [editingIndex, setEditingIndex] = useState(-1);
     const [editText, setEditText] = useState('');
     const [editConnect, setEditConnect] = useState('');
@@ -28,8 +29,10 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
         }
     }, [switches]);
 
+    const generateSwitchId = () => `sn${Math.random().toString(36).substr(2, 9)}`;
+
     const addSwitch = () => {
-        const newSwitches = [...switches, { text: '', connect: '' }];
+        const newSwitches = [...switches, { id: generateSwitchId(), text: '', connect: '' }];
         setSwitches(newSwitches);
         data.onChange(id, newSwitches);
     };
@@ -42,7 +45,7 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
 
     const saveEdit = () => {
         const updatedSwitches = [...switches];
-        updatedSwitches[editingIndex] = { text: editText, connect: editConnect };
+        updatedSwitches[editingIndex] = { ...updatedSwitches[editingIndex], text: editText, connect: editConnect };
         setSwitches(updatedSwitches);
         data.onChange(id, updatedSwitches);
         setEditingIndex(-1);
@@ -68,7 +71,7 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
             <Handle type="target" position={Position.Left} id="left-handle" style={{ background: 'gray', width: 10, height: 10, transform: 'translateX(-50%)' }} />
             <div className="node-content">
                 {switches.map((sw, index) => (
-                    <div key={index} className="switch-container">
+                    <div key={sw.id} className="switch-container"> {/* key propunu switch id ile ayarlıyoruz */}
                         {editingIndex === index ? (
                             <textarea
                                 value={editText}
@@ -84,7 +87,7 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
                         <Handle
                             type="source"
                             position={Position.Right}
-                            id={`choice-${index}`}
+                            id={sw.id}
                             style={{
                                 right: -10,
                                 top: '50%',

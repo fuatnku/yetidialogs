@@ -142,7 +142,9 @@ const CommandNode: React.FC<CommandNodeProps> = ({ id, data }) => {
                                 />
                             </div>
                         ) : (
-                            <Command key={index} command={cmd} index={index} />
+                            <div key={index} onDoubleClick={() => startEdit(index)} className="node-answer">
+                                {cmd || "New command"}
+                            </div>
                         )
                     ))}
                     {editingIndex !== -1 ? (

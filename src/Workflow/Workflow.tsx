@@ -46,9 +46,13 @@ export const Workflow = () => {
     const [history, setHistory] = useState([{ nodes: initialNodes, edges: initialEdges }]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
     const { language, toggleLanguage } = useLanguage(); // Use language from context
-
     const isUndoRedo = useRef(false); // Bayrak
     const isProgrammaticChange = useRef(false); // Programatik değişiklik bayrağı
+    const [isNodesLocked, setIsNodesLocked] = useState(false); // Node kilit durumu
+
+    const toggleNodesLock = () => {
+        setIsNodesLocked(prevState => !prevState);
+    };
 
     const applyChanges = (newNodes, newEdges) => {
         if (isProgrammaticChange.current) return;
@@ -389,6 +393,9 @@ export const Workflow = () => {
 
     return (
         <Box height={'90vh'} width={'100vw'}>
+            <Button onClick={toggleNodesLock} m={2}>
+                {isNodesLocked ? '🔒' : '🔓'} {/* Kilit ikonu */}
+            </Button>
             <Button
                 onClick={() => {
                     setNodes([]);
@@ -446,6 +453,7 @@ export const Workflow = () => {
                 fitView
                 minZoom={0.1} // Set the minimum zoom level
                 maxZoom={4} // Set the maximum zoom level
+                nodesDraggable={!isNodesLocked} // Node'ların sürüklenebilirliği kontrol ediliyor
             >
                 <MiniMap
                     pannable

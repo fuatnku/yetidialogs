@@ -205,7 +205,7 @@ export const Workflow = () => {
                         isRandomOrder: node.data.isRandomOrder,
                         isIconNode: node.data.isIconNode,
                         position: node.position,
-                        questionConnect: questionConnection
+                        connect: questionConnection
                     };
                     break;
                 default:
@@ -288,12 +288,12 @@ export const Workflow = () => {
                                 }
                             });
                         }
-                        if (data[key].questionConnect) {
+                        if (data[key].connect) {
                             newEdges.push({
-                                id: `${key}-question-source-handle-${data[key].questionConnect}`,
+                                id: `${key}-question-source-handle-${data[key].connect}`,
                                 source: key,
                                 sourceHandle: 'question-source-handle',
-                                target: data[key].questionConnect,
+                                target: data[key].connect,
                                 type: 'customEdge',
                                 animated: true,
                             });
@@ -399,16 +399,18 @@ export const Workflow = () => {
         setNodes(prevNodes => prevNodes.map(node => {
             if (node.id === id) {
                 const oldData = node.data;
-                const oldSwitches = oldData.switches || [];
-                const newSwitches = newData.switches || [];
+                const oldAnswers = oldData.answers || [];
+                const newAnswers = newData.answers || [];
 
-                const removedSwitchIds = oldSwitches
-                    .filter(oldSw => !newSwitches.some(newSw => newSw.id === oldSw.id))
-                    .map(sw => sw.id);
-                setEdges(prevEdges => prevEdges.filter(edge => {
-                    const sourceHandleId = edge.sourceHandle ? edge.sourceHandle.replace('source-', '') : null;
-                    return !removedSwitchIds.includes(sourceHandleId);
-                }));
+                // Question bağlantısını kaldır
+                if (oldAnswers.length === 0 && newAnswers.length > 0) {
+                    setEdges(prevEdges => prevEdges.filter(edge => !(edge.source === id && edge.sourceHandle === 'question-source-handle')));
+                }
+
+                // Son answer silindiğinde, tüm ilgili edge'leri kaldır
+                if (oldAnswers.length > 0 && newAnswers.length === 0) {
+                    setEdges(prevEdges => prevEdges.filter(edge => edge.source !== id || edge.sourceHandle === 'question-source-handle'));
+                }
 
                 return { ...node, data: { ...node.data, ...newData } };
             }

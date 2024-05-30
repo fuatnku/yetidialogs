@@ -56,6 +56,11 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
         const newAnswers = [...answers, newAnswer];
         setAnswers(newAnswers);
         data.onChange(id, 'answers', newAnswers);
+
+        // Question bağlantısını kaldır
+        if (data.connect) {
+            data.onChange(id, 'connect', null);
+        }
     };
 
     const startEdit = (index: number | null, value: string) => {
@@ -90,6 +95,11 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
             const newAnswers = answers.filter((_, i) => i !== editingIndex);
             setAnswers(newAnswers);
             data.onChange(id, 'answers', newAnswers);
+
+            // Eğer tüm answer'lar silinmişse, question bağlantısını geri ekle
+            if (newAnswers.length === 0 && !data.connect) {
+                data.onChange(id, 'connect', null);
+            }
         }
     };
 

@@ -196,7 +196,7 @@ export const Workflow = () => {
                         const connection = outgoingEdges.find(edge => edge.sourceHandle === answer.id);
                         return { ...answer, connect: connection ? connection.target : null };
                     });
-                    nodeData[node.id] = { question: node.data.question, answers, position: node.position };
+                    nodeData[node.id] = { question: node.data.question, answers, isRandomOrder: node.data.isRandomOrder, isIconNode: node.data.isIconNode, position: node.position };
                     break;
                 default:
                     nodeData[node.id] = commonData;
@@ -239,7 +239,12 @@ export const Workflow = () => {
                             id: key,
                             type: type,
                             position: data[key].position || { x: 0, y: 0 },
-                            data: { ...data[key], id: key }
+                            data: {
+                                ...data[key],
+                                id: key,
+                                isRandomOrder: data[key].isRandomOrder || false,
+                                isIconNode: data[key].isIconNode || false,
+                            }
                         };
                     });
 

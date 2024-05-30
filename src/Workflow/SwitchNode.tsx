@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position, useOnSelectionChange } from 'reactflow';
 import './custom-node.css';
 
 interface Switch {
@@ -22,6 +22,14 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
     const [editingIndex, setEditingIndex] = useState(-1);
     const [editText, setEditText] = useState('');
     const [editConnect, setEditConnect] = useState('');
+    const [isSelected, setIsSelected] = useState(false);
+
+    useOnSelectionChange({
+        onChange: ({ nodes }) => {
+            const isSelected = nodes.some(node => node.id === id);
+            setIsSelected(isSelected);
+        },
+    });
 
     useEffect(() => {
         if (data.onDataChange) {
@@ -63,21 +71,26 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
     };
 
     return (
-        <div className="custom-node">
+        <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
             <div className="node-header-switch">
                 <span>Switch Node</span>
                 <span className="node-id">ID: {id}</span>
             </div>
-            <Handle type="target" position={Position.Left} id="left-handle" style={{ background: 'gray', width: 10, height: 10, transform: 'translateX(-50%)' }} />
+            <Handle
+                type="target"
+                position={Position.Left}
+                id="left-handle"
+                style={{ background: 'gray', width: 10, height: 10, transform: 'translateX(-50%)' }}
+            />
             <div className="node-content">
                 {switches.map((sw, index) => (
-                    <div key={sw.id} className="switch-container"> {/* key propunu switch id ile ayarlıyoruz */}
+                    <div key={sw.id} className="switch-container">
                         {editingIndex === index ? (
                             <textarea
                                 value={editText}
                                 onChange={(e) => setEditText(e.target.value)}
-                                rows={2}  // Satır sayısını belirleyin
-                                className="node-answer-edit"  // CustomNode'da kullanılan CSS sınıfını uygulayın
+                                rows={2}
+                                className="node-answer-edit"
                             />
                         ) : (
                             <div onDoubleClick={() => startEdit(index)}>

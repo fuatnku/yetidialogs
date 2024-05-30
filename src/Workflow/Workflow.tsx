@@ -196,7 +196,17 @@ export const Workflow = () => {
                         const connection = outgoingEdges.find(edge => edge.sourceHandle === answer.id);
                         return { ...answer, connect: connection ? connection.target : null };
                     });
-                    nodeData[node.id] = { question: node.data.question, answers, isRandomOrder: node.data.isRandomOrder, isIconNode: node.data.isIconNode, position: node.position };
+                    const questionConnection = answers.length === 0
+                        ? outgoingEdges.find(edge => edge.sourceHandle === "question-source-handle")?.target || null
+                        : null;
+                    nodeData[node.id] = {
+                        question: node.data.question,
+                        answers,
+                        isRandomOrder: node.data.isRandomOrder,
+                        isIconNode: node.data.isIconNode,
+                        position: node.position,
+                        questionConnect: questionConnection
+                    };
                     break;
                 default:
                     nodeData[node.id] = commonData;
@@ -276,6 +286,16 @@ export const Workflow = () => {
                                         animated: true,
                                     });
                                 }
+                            });
+                        }
+                        if (data[key].questionConnect) {
+                            newEdges.push({
+                                id: `${key}-question-source-handle-${data[key].questionConnect}`,
+                                source: key,
+                                sourceHandle: 'question-source-handle',
+                                target: data[key].questionConnect,
+                                type: 'customEdge',
+                                animated: true,
                             });
                         }
                         if (data[key].connect) {

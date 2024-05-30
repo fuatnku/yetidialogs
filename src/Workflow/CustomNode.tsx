@@ -127,6 +127,21 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                 ) : (
                     <div className="node-question" onDoubleClick={() => startEdit(null, question[language])}>
                         {question[language]}
+                        {answers.length === 0 && (
+                            <Handle
+                                type="source"
+                                position={Position.Right}
+                                id="question-source-handle"
+                                style={{
+                                    right: -10,
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    width: 10,
+                                    height: 10,
+                                    background: 'gray',
+                                }}
+                            />
+                        )}
                     </div>
                 )}
                 {answers.map((answer, index) => (

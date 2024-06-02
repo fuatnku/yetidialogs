@@ -123,7 +123,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                 type="target"
                 position={Position.Left}
                 id="left-handle"
-                style={{ background: 'gray',width:10,height:10,transform: 'translateX(-50%)' }}
+                style={{background: 'gray', width: 10, height: 10, transform: 'translateX(-50%)'}}
             />
 
             <div className="node-content">
@@ -135,7 +135,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                         rows={4}
                     />
                 ) : (
-                    <div className="node-question" onDoubleClick={() => startEdit(null, question[language])}>
+                    <div className="node-question" onClick={() => startEdit(null, question[language])}>
                         {question[language]}
                         {answers.length === 0 && (
                             <Handle
@@ -169,7 +169,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                         ) : (
                             <div
                                 className="node-answer"
-                                onDoubleClick={() => startEdit(index, answer.text[language])}
+                                onClick={() => startEdit(index, answer.text[language])}
                                 style={{position: 'relative'}}
                             >
                                 {answer.text[language]}

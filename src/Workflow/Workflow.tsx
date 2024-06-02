@@ -224,6 +224,155 @@ export const Workflow = () => {
         link.remove();
     }, [nodes, edges]);
 
+    const exportToClipboard = useCallback(() => {
+        const nodeData = {};
+        nodes.forEach(node => {
+            const outgoingEdges = edges.filter(edge => edge.source === node.id);
+            const commonData = {
+                position: node.position,
+                id: node.id
+            };
+
+            switch (node.type) {
+                case 'pauseNode':
+                    const pauseConnect = outgoingEdges.length > 0 ? outgoingEdges[0].target : null;
+                    nodeData[node.id] = { pause: node.data.pause, connect: pauseConnect, position: node.position };
+                    break;
+                case 'commandNode':
+                    const commandConnect = outgoingEdges.length > 0 ? outgoingEdges[0].target : null;
+                    nodeData[node.id] = { commands: node.data.commands, connect: commandConnect, position: node.position };
+                    break;
+                case 'switchNode':
+                    const switches = node.data.switches.map(sw => {
+                        const connection = outgoingEdges.find(edge => edge.sourceHandle === sw.id);
+                        return { ...sw, connect: connection ? connection.target : null };
+                    });
+                    nodeData[node.id] = { switches, position: node.position };
+                    break;
+                case 'customNode':
+                    const answers = node.data.answers.map(answer => {
+                        const connection = outgoingEdges.find(edge => edge.sourceHandle === answer.id);
+                        return { ...answer, connect: connection ? connection.target : null };
+                    });
+                    const questionConnection = answers.length === 0
+                        ? outgoingEdges.find(edge => edge.sourceHandle === "question-source-handle")?.target || null
+                        : null;
+                    nodeData[node.id] = {
+                        question: node.data.question,
+                        answers,
+                        isRandomOrder: node.data.isRandomOrder,
+                        isIconNode: node.data.isIconNode,
+                        position: node.position,
+                        connect: questionConnection
+                    };
+                    break;
+                default:
+                    nodeData[node.id] = commonData;
+                    break;
+            }
+        });
+
+        const data = JSON.stringify(nodeData, null, 2);
+        navigator.clipboard.writeText(data).then(() => {
+            console.log('Workflow copied to clipboard');
+        }).catch(err => {
+            console.error('Error copying workflow to clipboard: ', err);
+        });
+    }, [nodes, edges]);
+
+    const importFromClipboard = useCallback(async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            const data = JSON.parse(text);
+
+            const newNodes = Object.keys(data).map(key => {
+                let type = 'customNode'; // Varsayılan node tipi
+
+                // Node tipini ID'nin baş harfine göre belirle
+                if (key.startsWith('P')) {
+                    type = 'pauseNode';
+                } else if (key.startsWith('C')) {
+                    type = 'commandNode';
+                } else if (key.startsWith('S')) {
+                    type = 'switchNode';
+                } else if (key.startsWith('Q')) {
+                    type = 'customNode';
+                }
+
+                return {
+                    id: key,
+                    type: type,
+                    position: data[key].position || { x: 0, y: 0 },
+                    data: {
+                        ...data[key],
+                        id: key,
+                        isRandomOrder: data[key].isRandomOrder || false,
+                        isIconNode: data[key].isIconNode || false,
+                    }
+                };
+            });
+
+            const newEdges = [];
+            Object.keys(data).forEach(key => {
+                if (data[key].answers) {
+                    data[key].answers.forEach(answer => {
+                        if (answer.connect) {
+                            newEdges.push({
+                                id: `${key}-${answer.id}-${answer.connect}`,
+                                source: key,
+                                sourceHandle: answer.id,
+                                target: answer.connect,
+                                type: 'customEdge',
+                                animated: true,
+                            });
+                        }
+                    });
+                }
+                if (data[key].switches) {
+                    data[key].switches.forEach(sw => {
+                        if (sw.connect) {
+                            newEdges.push({
+                                id: `${key}-${sw.id}-${sw.connect}`,
+                                source: key,
+                                sourceHandle: sw.id,
+                                target: sw.connect,
+                                type: 'customEdge',
+                                animated: true,
+                            });
+                        }
+                    });
+                }
+                if (data[key].connect) {
+                    newEdges.push({
+                        id: `${key}-question-source-handle-${data[key].connect}`,
+                        source: key,
+                        sourceHandle: 'question-source-handle',
+                        target: data[key].connect,
+                        type: 'customEdge',
+                        animated: true,
+                    });
+                }
+                if (data[key].connect) {
+                    newEdges.push({
+                        id: `${key}-${data[key].connect}`,
+                        source: key,
+                        target: data[key].connect,
+                        type: 'customEdge',
+                        animated: true,
+                    });
+                }
+            });
+
+            isProgrammaticChange.current = true;
+            setNodes(newNodes);
+            setEdges(newEdges);
+            isProgrammaticChange.current = false;
+            applyChanges(newNodes, newEdges);
+        } catch (error) {
+            console.error("Clipboard parsing error: ", error);
+        }
+    }, [setNodes, setEdges, applyChanges]);
+
     const importWorkflow = useCallback((event) => {
         const file = event.target.files[0];
         if (file) {
@@ -447,6 +596,8 @@ export const Workflow = () => {
             <label htmlFor="import-file">
                 <Button as="span" m={2}>Import</Button>
             </label>
+            <Button onClick={exportToClipboard} m={2}>to Clipboard</Button>
+            <Button onClick={importFromClipboard} m={2}>from Clipboard</Button>
             <Button onClick={toggleLanguage} m={2}>Lang {language}</Button>
             <Button onClick={newDiagram} m={2}>New</Button>
             <Button backgroundColor="#A3D8F4" onClick={addNewNode} m={2}>+Qstn</Button>
@@ -510,4 +661,3 @@ export const Workflow = () => {
 };
 
 export default Workflow;
-

@@ -138,12 +138,22 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
 
             <div className="node-content">
                 {editing && editingIndex === null ? (
-                    <textarea
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        className="node-question-edit"
-                        rows={4}
-                    />
+                    <table width='100%'>
+                        <tr>
+                            <textarea
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                className="node-question-edit"
+                                rows={4}
+                            />
+                        </tr>
+                        <tr>
+                            <div className="edit-controls">
+                                <button onClick={applyEdit}>✔️</button>
+                                <button onClick={cancelEdit}>❌</button>
+                            </div>
+                        </tr>
+                    </table>
                 ) : (
                     <div className="node-question" onClick={() => startEdit(null, question[language])}>
                         {question[language]}
@@ -168,13 +178,23 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                     <div key={answer.id} className="node-answer-container">
                         {editing && editingIndex === index ? (
                             <div className="node-answer-edit-container">
+                                <table width='100%'>
+                                    <tr>
                                 <textarea
                                     value={editValue}
                                     onChange={(e) => setEditValue(e.target.value)}
                                     className="node-answer-edit"
                                     rows={2}
                                 />
-                                <button onClick={deleteAnswer} className="delete-answer-button">🗑️</button>
+                                    </tr>
+                                    <tr>
+                                        <div className="edit-controls">
+                                            <button onClick={applyEdit}>✔️</button>
+                                            <button onClick={deleteAnswer} className="delete-answer-button">🗑️</button>
+                                            <button onClick={cancelEdit}>❌</button>
+                                        </div>
+                                    </tr>
+                                </table>
                             </div>
                         ) : (
                             <div
@@ -216,12 +236,6 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
                     </button>
                 )}
             </div>
-            {editing && (
-                <div className="edit-controls">
-                    <button onClick={applyEdit}>✔️</button>
-                    <button onClick={cancelEdit}>❌</button>
-                </div>
-            )}
         </div>
     );
 };

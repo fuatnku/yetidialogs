@@ -596,8 +596,9 @@ export const Workflow = () => {
 
     return (
         <Box height='85vh' width='100vw'>
-            <Box height='24px' width='100vw' background="gray">
-                {editingNodeId?(<div>Editing Node:{editingNodeId}</div>):(<div>Normal Mode</div>)}
+            <Box height='24px' width='100vw' background="gray" hidden={false}>
+                Undo {currentHistoryIndex} of {history.length - 1}( n:{nodes.length} e:{edges.length} )
+                {editingNodeId ? (<> Editing Node:{editingNodeId}</>) : (<> Normal Mode</>)}
             </Box>
             <Box height='40px' width='100vw'>
                 <Button onClick={toggleNodesLock} m={2}>
@@ -616,30 +617,31 @@ export const Workflow = () => {
                 >
                     Redraw
                 </Button>
-                <Button onClick={exportWorkflow} m={2}>Export</Button>
-                <input
-                    type="file"
-                    accept=".json"
-                    onChange={importWorkflow}
-                    style={{display: 'none'}}
-                    id="import-file"
-                />
-                <label htmlFor="import-file">
-                    <Button as="span" m={2}>Import</Button>
-                </label>
-                <Button onClick={exportToClipboard} m={2}>to Clipboard</Button>
-                <Button onClick={importFromClipboard} m={2}>from Clipboard</Button>
-                <Button onClick={toggleLanguage} m={2}>Lang {language}</Button>
-                <Button onClick={newDiagram} m={2}>New</Button>
-                <Button backgroundColor="#A3D8F4" onClick={addNewNode} m={2}>+Qstn</Button>
-                <Button backgroundColor="#B9E2C8" onClick={addPauseNode} m={2}>+Pause</Button>
-                <Button backgroundColor="#FFFACD" onClick={addCommandNode} m={2}>+Cmd</Button>
-                <Button backgroundColor="#F4C1D9" onClick={addSwitchNode} m={2}>+Switch</Button>
-                <Button onClick={undo} m={2}>Undo</Button>
-                <Button onClick={redo} m={2}>Redo</Button>
-                <label>Undo {currentHistoryIndex} of {history.length - 1}</label>
-                <label> ( n:{nodes.length} e:{edges.length} )</label>
-
+                {editingNodeId === null && (
+                    <>
+                        <Button onClick={exportWorkflow} m={2}>Export</Button>
+                        <input
+                            type="file"
+                            accept=".json"
+                            onChange={importWorkflow}
+                            style={{ display: 'none' }}
+                            id="import-file"
+                        />
+                        <label htmlFor="import-file">
+                            <Button as="span" m={2}>Import</Button>
+                        </label>
+                        <Button onClick={exportToClipboard} m={2}>to Clipboard</Button>
+                        <Button onClick={importFromClipboard} m={2}>from Clipboard</Button>
+                        <Button onClick={toggleLanguage} m={2}>Lang {language}</Button>
+                        <Button onClick={newDiagram} m={2}>New</Button>
+                        <Button backgroundColor="#A3D8F4" onClick={addNewNode} m={2}>+Qstn</Button>
+                        <Button backgroundColor="#B9E2C8" onClick={addPauseNode} m={2}>+Pause</Button>
+                        <Button backgroundColor="#FFFACD" onClick={addCommandNode} m={2}>+Cmd</Button>
+                        <Button backgroundColor="#F4C1D9" onClick={addSwitchNode} m={2}>+Switch</Button>
+                        <Button onClick={undo} m={2}>Undo</Button>
+                        <Button onClick={redo} m={2}>Redo</Button>
+                    </>
+                )}
             </Box>
             <ReactFlow
                 nodes={nodes.map(node => ({
@@ -669,7 +671,7 @@ export const Workflow = () => {
                 minZoom={0.1}
                 maxZoom={4}
                 zoomOnDoubleClick={false}
-                selectionOnDrag={true}
+//                selectionOnDrag={true}
                 nodesFocusable={!editingNodeId}
                 nodesDraggable={!editingNodeId}
                 panOnDrag={!editingNodeId}

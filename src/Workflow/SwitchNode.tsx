@@ -96,20 +96,31 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
                 {switches.map((sw, index) => (
                     <div key={sw.id} className="switch-container">
                         {editingIndex === index ? (
+                            <table width='100%'>
+                            <tr>
                             <textarea
                                 value={editText}
                                 onChange={(e) => setEditText(e.target.value)}
                                 rows={2}
                                 className="node-answer-edit"
                             />
+                            </tr>
+                            <tr>
+                                <div className="edit-controls">
+                                    <button onClick={saveEdit}>✔️</button>
+                                    <button onClick={() => deleteSwitch(editingIndex)}>🗑️</button>
+                                    <button onClick={cancelEdit}>❌</button>
+                                </div>
+                            </tr>
+                            </table>
                         ) : (
                             <div onClick={() => startEdit(index)}>
-                                {sw.text || "New switch"}
-                            </div>
-                        )}
-                        <Handle
-                            type="source"
-                            position={Position.Right}
+                        {sw.text || "New switch"}
+                    </div>
+                )}
+                <Handle
+                    type="source"
+                    position={Position.Right}
                             id={sw.id}
                             style={{
                                 right: -10,
@@ -123,11 +134,7 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
                     </div>
                 ))}
                 {editingIndex !== -1 ? (
-                    <div className="edit-controls">
-                        <button onClick={saveEdit}>✔️</button>
-                        <button onClick={cancelEdit}>❌</button>
-                        <button onClick={() => deleteSwitch(editingIndex)}>🗑️</button>
-                    </div>
+                    <button className="add-answer-button">Add</button>
                 ) : (
                     <button onClick={addSwitch} className="add-answer-button">Add</button>
                 )}

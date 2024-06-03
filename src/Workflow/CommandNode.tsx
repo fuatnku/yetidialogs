@@ -72,6 +72,7 @@ const CommandNode: React.FC<CommandNodeProps> = ({ id, data }) => {
         const updatedCommands = commands.filter((_, i) => i !== index);
         setCommands(updatedCommands);
         data.onChange(id, 'commands', updatedCommands);
+        setEditingIndex(-1);
     };
 
     const moveCommand = (dragIndex: number, hoverIndex: number) => {
@@ -143,14 +144,24 @@ const CommandNode: React.FC<CommandNodeProps> = ({ id, data }) => {
                 <div className="node-content">
                     {commands.map((cmd, index) => (
                         editingIndex === index ? (
-                            <div key={index} className="switch-container">
+                            <table width='100%'>
+                                <tr>
                                 <textarea
                                     value={editValue}
                                     onChange={(e) => setEditValue(e.target.value)}
                                     rows={2}
                                     className="node-answer-edit"
                                 />
-                            </div>
+                                </tr>
+                                <tr>
+                                    <div className="edit-controls">
+                                        <button onClick={saveEdit}>✔️</button>
+                                        <button onClick={() => deleteCommand(editingIndex)}>🗑️</button>
+                                        <button onClick={cancelEdit}>❌</button>
+                                    </div>
+                                </tr>
+                            </table>
+
                         ) : (
                             <div key={index} onClick={() => startEdit(index)} className="node-answer">
                                 {cmd || "New command"}
@@ -158,11 +169,7 @@ const CommandNode: React.FC<CommandNodeProps> = ({ id, data }) => {
                         )
                     ))}
                     {editingIndex !== -1 ? (
-                        <div className="edit-controls">
-                            <button onClick={saveEdit}>✔️</button>
-                            <button onClick={cancelEdit}>❌</button>
-                            <button onClick={() => deleteCommand(editingIndex)}>🗑️</button>
-                        </div>
+                        <button className="add-answer-button">Add</button>
                     ) : (
                         <button onClick={addCommand} className="add-answer-button">Add</button>
                     )}

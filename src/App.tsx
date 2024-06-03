@@ -1,18 +1,18 @@
 import { ChakraProvider } from "@chakra-ui/react";
-import { useState } from "react";
 import { Workflow } from "./Workflow/Workflow";
-import { useStoreState } from 'react-flow-renderer';
-import { LanguageProvider } from './Workflow/LanguageContext.jsx';
-
+import { LanguageProvider } from './Workflow/LanguageContext';
+import { EditProvider } from './Workflow/EditContext';
 
 function App() {
-  return (
-    <ChakraProvider>
-        <LanguageProvider>
-            <Workflow />
-        </LanguageProvider>
-    </ChakraProvider>
-  );
+    return (
+        <ChakraProvider>
+            <EditProvider>
+                <LanguageProvider>
+                    <Workflow />
+                </LanguageProvider>
+            </EditProvider>
+        </ChakraProvider>
+    );
 }
 
 export default App;

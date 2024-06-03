@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import {Handle, Position, useOnSelectionChange} from 'reactflow';
+import React, { useState, useEffect } from 'react';
+import { Handle, Position, useOnSelectionChange } from 'reactflow';
+import { useEdit } from './EditContext';
 import './custom-node.css';
 
 interface PauseNodeProps {
@@ -11,7 +12,7 @@ interface PauseNodeProps {
 }
 
 const PauseNode: React.FC<PauseNodeProps> = ({ id, data }) => {
-    const [editing, setEditing] = useState(false);
+    const { editingNodeId, setEditingNodeId } = useEdit();
     const [text, setText] = useState(data.pause);
     const [isSelected, setIsSelected] = useState(false);
 
@@ -22,15 +23,31 @@ const PauseNode: React.FC<PauseNodeProps> = ({ id, data }) => {
         },
     });
 
-    const toggleEdit = () => setEditing(!editing);
+    const toggleEdit = () => {
+        if (editingNodeId === id) {
+            setEditingNodeId(null);
+        } else {
+            setEditingNodeId(id);
+        }
+    };
+
     const saveText = () => {
         data.onChange(id, "pause", text);
-        setEditing(false);
+        setEditingNodeId(null);
     };
+
     const cancelEdit = () => {
         setText(data.pause);
-        setEditing(false);
+        setEditingNodeId(null);
     };
+
+    useEffect(() => {
+        if (editingNodeId !== id) {
+            setText(data.pause);
+        }
+    }, [editingNodeId, id, data.pause]);
+
+    const isEditing = editingNodeId === id;
 
     return (
         <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
@@ -42,9 +59,9 @@ const PauseNode: React.FC<PauseNodeProps> = ({ id, data }) => {
                 type="target"
                 position={Position.Left}
                 id="left-handle"
-                style={{background: 'gray', width: 10, height: 10, transform: 'translateX(-50%)'}}
+                style={{ background: 'gray', width: 10, height: 10, transform: 'translateX(-50%)' }}
             />
-            {editing ? (
+            {isEditing ? (
                 <div>
                     <textarea
                         value={text}

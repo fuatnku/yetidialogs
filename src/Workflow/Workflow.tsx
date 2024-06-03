@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback, useState, useRef } from 'react';
+
 import ReactFlow, {
     addEdge,
     Background,
@@ -600,7 +601,7 @@ export const Workflow = () => {
                 Undo {currentHistoryIndex} of {history.length - 1}( n:{nodes.length} e:{edges.length} )
                 {editingNodeId ? (<> Editing Node:{editingNodeId}</>) : (<> Normal Mode</>)}
             </Box>
-            <Box height='40px' width='100vw'>
+            <Box height='50px' width='100vw'>
                 <Button onClick={toggleNodesLock} m={2}>
                     {isNodesLocked ? '🔒' : '🔓'} {/* Kilit ikonu */}
                 </Button>

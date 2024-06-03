@@ -9,6 +9,7 @@ import ReactFlow, {
     Connection,
     NodeDragStopEvent,
     MiniMap, Edge,
+    OnSelectionChangeParams,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Box, Button } from '@chakra-ui/react';
@@ -49,6 +50,9 @@ export const Workflow = () => {
     const isUndoRedo = useRef(false); // Bayrak
     const isProgrammaticChange = useRef(false); // Programatik değişiklik bayrağı
     const [isNodesLocked, setIsNodesLocked] = useState(false); // Node kilit durumu
+
+    const [highlightedNodes, setHighlightedNodes] = useState([]);
+    const [highlightedEdges, setHighlightedEdges] = useState([]);
 
     const toggleNodesLock = () => {
         setIsNodesLocked(prevState => !prevState);
@@ -567,6 +571,27 @@ export const Workflow = () => {
         }));
     }, [nodes, setNodes, setEdges, edges]);
 
+    const highlightConnections = useCallback((node) => {
+        const connectedEdges = edges.filter(edge => edge.source === node.id || edge.target === node.id);
+        const connectedNodeIds = connectedEdges.map(edge => (edge.source === node.id ? edge.target : edge.source));
+        const connectedNodes = nodes.filter(n => connectedNodeIds.includes(n.id));
+        setHighlightedNodes(connectedNodes);
+        setHighlightedEdges(connectedEdges);
+    }, [edges, nodes]);
+
+    const resetHighlight = useCallback(() => {
+        setHighlightedNodes([]);
+        setHighlightedEdges([]);
+    }, []);
+
+    const onSelectionChange = useCallback(({ nodes, edges }) => {
+        if (nodes.length > 0) {
+            highlightConnections(nodes[0]);
+        } else {
+            resetHighlight();
+        }
+    }, [highlightConnections, resetHighlight]);
+
     return (
         <Box height={'90vh'} width={'100vw'}>
             <Button onClick={toggleNodesLock} m={2}>
@@ -619,11 +644,15 @@ export const Workflow = () => {
                         onDataChange: handleDataChange,
                     }
                 }))}
-                edges={edges}
+                edges={edges.map(edge => ({
+                    ...edge,
+                    style: highlightedEdges.includes(edge) ? { strokeWidth: 3 } : {},
+                }))}
                 onNodesChange={onNodesChangeWrapper}
                 onEdgesChange={onEdgesChangeWrapper}
                 onConnect={onConnect}
                 onNodeDragStop={onNodeDragStop}
+                onSelectionChange={onSelectionChange}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 snapToGrid
@@ -639,6 +668,9 @@ export const Workflow = () => {
                     zoomStep={0.5}
                     nodeStrokeWidth={3}
                     nodeColor={node => {
+                        if (highlightedNodes.includes(node)) {
+                            return '#FF0000'; // Highlighted nodes are red
+                        }
                         switch (node.type) {
                             case 'pauseNode':
                                 return '#B9E2C8';

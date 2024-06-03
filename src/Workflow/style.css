@@ -63,3 +63,13 @@
 .react-flow__devtools-nodeinfo {
     top: 5px;
 }
+
+.highlighted-node {
+    border: 2px solid red !important;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+.highlighted-edge {
+    stroke-width: 3px !important;
+    stroke: red !important;
+}

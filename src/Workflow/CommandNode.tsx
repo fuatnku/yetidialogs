@@ -5,6 +5,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import update from 'immutability-helper';
 import './custom-node.css';
 import { Node } from "./CustomNodeTypes";  // Use existing styles
+import { useEdit } from './EditContext';
 
 interface CommandNodeProps {
     id: string;
@@ -17,6 +18,7 @@ interface CommandNodeProps {
 }
 
 const CommandNode: React.FC<CommandNodeProps> = ({ id, data }) => {
+    const { editingNodeId, setEditingNodeId } = useEdit();
     const [commands, setCommands] = useState(data.commands);
     const [editingIndex, setEditingIndex] = useState(-1);
     const [editValue, setEditValue] = useState('');
@@ -34,6 +36,14 @@ const CommandNode: React.FC<CommandNodeProps> = ({ id, data }) => {
             data.onDataChange(id, { commands });
         }
     }, [commands]);
+
+    useEffect(() => {
+        if (editingIndex !== -1){
+            setEditingNodeId(id);
+        }else {
+            setEditingNodeId(null);
+        }
+    }, [editingIndex]);
 
     const addCommand = () => {
         const newCommands = [...commands, 'Command'];
@@ -109,7 +119,7 @@ const CommandNode: React.FC<CommandNodeProps> = ({ id, data }) => {
                     opacity: isDragging ? 0.5 : 1,
                     cursor: 'move',
                 }}
-                onDoubleClick={() => startEdit(index)}
+                onClick={() => startEdit(index)}
                 className="node-answer"
             >
                 {command}
@@ -142,7 +152,7 @@ const CommandNode: React.FC<CommandNodeProps> = ({ id, data }) => {
                                 />
                             </div>
                         ) : (
-                            <div key={index} onDoubleClick={() => startEdit(index)} className="node-answer">
+                            <div key={index} onClick={() => startEdit(index)} className="node-answer">
                                 {cmd || "New command"}
                             </div>
                         )

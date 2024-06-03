@@ -649,7 +649,8 @@ export const Workflow = () => {
                         id: node.id,
                         onChange: handleNodeChange,
                         onDataChange: handleDataChange,
-                    }
+                    },
+                    style: editingNodeId && node.id !== editingNodeId ? { opacity: 0.5, pointerEvents: 'none' } : {}, // Node stilini ayarlama
                 }))}
                 edges={edges.map(edge => ({
                     ...edge,
@@ -665,10 +666,15 @@ export const Workflow = () => {
                 snapToGrid
                 snapGrid={[20, 20]}
                 fitView
-                minZoom={0.1} // Set the minimum zoom level
-                maxZoom={4} // Set the maximum zoom level
-                nodesDraggable={!editingNodeId} // Node'ların sürüklenebilirliği kontrol ediliyor
-                panOnDrag={!editingNodeId} // Pan işlemi kontrol ediliyor
+                minZoom={0.1}
+                maxZoom={4}
+                zoomOnDoubleClick={false}
+                selectionOnDrag={true}
+                nodesFocusable={!editingNodeId}
+                nodesDraggable={!editingNodeId}
+                panOnDrag={!editingNodeId}
+                preventScrolling={!editingNodeId}
+                nodesConnectable={!editingNodeId}
             >
                 <MiniMap
                     pannable
@@ -677,7 +683,7 @@ export const Workflow = () => {
                     nodeStrokeWidth={3}
                     nodeColor={node => {
                         if (highlightedNodes.includes(node)) {
-                            return '#FF0000'; // Highlighted nodes are red
+                            return '#FF0000';
                         }
                         switch (node.type) {
                             case 'pauseNode':

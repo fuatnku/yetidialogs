@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Handle, Position, useOnSelectionChange } from 'reactflow';
 import './custom-node.css';
+import { useEdit } from './EditContext';
 
 interface Switch {
     id: string;  // ID alanı ekleniyor
@@ -18,6 +19,7 @@ interface SwitchNodeProps {
 }
 
 const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
+    const { editingNodeId, setEditingNodeId } = useEdit();
     const [switches, setSwitches] = useState<Switch[]>(data.switches || []);
     const [editingIndex, setEditingIndex] = useState(-1);
     const [editText, setEditText] = useState('');
@@ -36,6 +38,14 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
             data.onDataChange(id, { switches });
         }
     }, [switches]);
+
+    useEffect(() => {
+        if (editingIndex !== -1){
+            setEditingNodeId(id);
+        }else {
+            setEditingNodeId(null);
+        }
+    }, [editingIndex]);
 
     const generateSwitchId = () => `switch-${Math.random().toString(36).substring(2, 11)}`;
 
@@ -93,7 +103,7 @@ const SwitchNode: React.FC<SwitchNodeProps> = ({ id, data }) => {
                                 className="node-answer-edit"
                             />
                         ) : (
-                            <div onDoubleClick={() => startEdit(index)}>
+                            <div onClick={() => startEdit(index)}>
                                 {sw.text || "New switch"}
                             </div>
                         )}

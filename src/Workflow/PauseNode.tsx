@@ -75,7 +75,7 @@ const PauseNode: React.FC<PauseNodeProps> = ({ id, data }) => {
                     </div>
                 </div>
             ) : (
-                <div onDoubleClick={toggleEdit} className="node-content">{text || "Pause"}</div>
+                <div onClick={toggleEdit} className="node-content">{text || "Pause"}</div>
             )}
             <Handle
                 type="source"

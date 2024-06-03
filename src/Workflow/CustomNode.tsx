@@ -3,6 +3,7 @@ import { Handle, Position, useOnSelectionChange } from 'reactflow';
 import { useLanguage } from './LanguageContext'; // Import the useLanguage hook
 import { Node } from './CustomNodeTypes';
 import './custom-node.css';
+import { useEdit } from './EditContext';
 
 interface Answer {
     id: string;
@@ -42,12 +43,21 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
     const [editing, setEditing] = useState(false);
     const [editValue, setEditValue] = useState('');
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const { editingNodeId, setEditingNodeId } = useEdit();
 
     useEffect(() => {
         if (data.onDataChange) {
             data.onDataChange(id, { question, answers, isRandomOrder, isIconNode });
         }
     }, [question, answers, isRandomOrder, isIconNode]);
+
+    useEffect(() => {
+        if (editing){
+            setEditingNodeId(id);
+        }else {
+            setEditingNodeId(null);
+        }
+    }, [editing]);
 
     const generateAnswerId = () => `answer-${Math.random().toString(36).substring(2, 11)}`;
 

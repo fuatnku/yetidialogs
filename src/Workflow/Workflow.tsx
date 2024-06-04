@@ -612,12 +612,10 @@ export const Workflow = () => {
         selectedNode.selected = false;
 
         if (duplicatedNode.data.answers) {
-            console.log('before id',JSON.stringify(duplicatedNode));
             duplicatedNode.data.answers = duplicatedNode.data.answers.map(answer => ({
                 ...answer,
                 id: `A${Math.floor(Math.random() * 9000000) + 1000000}`, // Yeni bir ID oluştur
             }));
-            console.log('after id',JSON.stringify(duplicatedNode));
         }
 
         if (duplicatedNode.data.switches) {
@@ -629,8 +627,6 @@ export const Workflow = () => {
 
         // Kopyalanan düğmeyi ekle
         isProgrammaticChange.current = true;
-        console.log('From:',JSON.stringify(selectedNode));
-        console.log('DupTo:',JSON.stringify(duplicatedNode));
         const newNodes = [...nodes, duplicatedNode];
         setNodes(newNodes);
         isProgrammaticChange.current = false;

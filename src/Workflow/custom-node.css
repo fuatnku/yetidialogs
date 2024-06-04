@@ -73,7 +73,6 @@
     margin-bottom: 5px;
     border: 1px solid #ccc;
     border-radius: 3px;
-    cursor: pointer;
 }
 
 .node-question-edit, .node-answer-edit {
@@ -94,7 +93,6 @@
     margin-left: 5px;
     background: none;
     border: none;
-    cursor: pointer;
 }
 
 .add-answer-button {
@@ -103,7 +101,6 @@
     border: none;
     font-size: 12px;
     font-style: italic;
-    cursor: pointer;
 }
 
 .set-random-order-button {
@@ -112,7 +109,6 @@
     border: none;
     font-size: 12px;
     font-style: italic;
-    cursor: pointer;
 }
 
 .edit-controls {
@@ -126,7 +122,6 @@
 
 /* New styles for drag handle */
 .drag-handle {
-    cursor: move;
     width: 100%;
     height: 20px;
     background: #ccc;
@@ -174,13 +169,11 @@
 .edit-controls button {
     padding: 3px 5px; /* Daha iyi tıklama alanı için */
     font-size: 12px; /* Font boyutunu ayarlayın */
-    cursor: pointer; /* Cursor tipini pointer yapın */
 }
 
 .add-answer-button, .delete-answer-button {
     background: none;
     border: none;
-    cursor: pointer;
     font-size: 12px;
 }
 

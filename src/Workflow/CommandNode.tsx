@@ -118,7 +118,6 @@ const CommandNode: React.FC<CommandNodeProps> = ({ id, data }) => {
                 ref={ref}
                 style={{
                     opacity: isDragging ? 0.5 : 1,
-                    cursor: 'move',
                 }}
                 onClick={() => startEdit(index)}
                 className="node-answer"

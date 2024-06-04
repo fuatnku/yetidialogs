@@ -595,6 +595,48 @@ export const Workflow = () => {
         }
     }, [highlightConnections, resetHighlight]);
 
+    const duplicateSelectedNode = useCallback(() => {
+        // Seçili düğmeyi bul
+        const selectedNode = nodes.find(node => node.selected === true);
+        if (!selectedNode) return;
+
+        // Yeni düğme için bir kopya oluştur
+        const duplicatedNode = {
+            ...selectedNode, // selectedNode'un tüm özelliklerini kopyala
+            id: `${selectedNode.id[0]}${Math.floor(Math.random() * 9000000) + 1000000}`,
+            position: { x: selectedNode.position.x + 50, y: selectedNode.position.y + 50 },
+            data: { ...selectedNode.data } ,
+            selected: true,
+        };
+
+        selectedNode.selected = false;
+
+        if (duplicatedNode.data.answers) {
+            console.log('before id',JSON.stringify(duplicatedNode));
+            duplicatedNode.data.answers = duplicatedNode.data.answers.map(answer => ({
+                ...answer,
+                id: `A${Math.floor(Math.random() * 9000000) + 1000000}`, // Yeni bir ID oluştur
+            }));
+            console.log('after id',JSON.stringify(duplicatedNode));
+        }
+
+        if (duplicatedNode.data.switches) {
+            duplicatedNode.data.switches = duplicatedNode.data.switches.map(sw => ({
+                ...sw,
+                id: `SW${Math.floor(Math.random() * 9000000) + 1000000}`, // Yeni bir ID oluştur
+            }));
+        }
+
+        // Kopyalanan düğmeyi ekle
+        isProgrammaticChange.current = true;
+        console.log('From:',JSON.stringify(selectedNode));
+        console.log('DupTo:',JSON.stringify(duplicatedNode));
+        const newNodes = [...nodes, duplicatedNode];
+        setNodes(newNodes);
+        isProgrammaticChange.current = false;
+        applyChanges(newNodes, edges);
+    }, [nodes, setNodes, edges, applyChanges, editingNodeId, highlightedNodes]);
+
     return (
         <Box height='85vh' width='100vw'>
             <Box height='24px' width='100vw' background="gray" hidden={false}>
@@ -641,6 +683,8 @@ export const Workflow = () => {
                         <Button backgroundColor="#F4C1D9" onClick={addSwitchNode} m={2}>+Switch</Button>
                         <Button onClick={undo} m={2}>Undo</Button>
                         <Button onClick={redo} m={2}>Redo</Button>
+                        <Button onClick={duplicateSelectedNode} m={2}>Duplicate</Button>
+
                     </>
                 )}
             </Box>

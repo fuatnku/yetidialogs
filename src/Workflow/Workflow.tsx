@@ -13,7 +13,8 @@ import ReactFlow, {
     OnSelectionChangeParams,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Box, Button } from '@chakra-ui/react';
+import { Box, Button, IconButton } from '@chakra-ui/react';
+import { FaLock, FaUnlock, FaRedo, FaUndo, FaCopy, FaPaste, FaFileExport, FaFileImport, FaLanguage, FaPlus, FaQuestionCircle, FaPause, FaTerminal, FaExchangeAlt } from 'react-icons/fa';
 import { initialEdges, initialNodes } from './Workflow.constants';
 import './style.css';
 
@@ -24,6 +25,9 @@ import CustomNode from './CustomNode';
 import CustomEdge from './CustomEdge';
 import { useLanguage } from './LanguageContext'; // Import the useLanguage hook
 import { useEdit } from './EditContext';
+import {TbClipboardCopy, TbDownload, TbRefresh, TbUpload} from "react-icons/tb";
+import {GrClone, GrLanguage} from "react-icons/gr";
+import {ImFileEmpty} from "react-icons/im";
 
 const edgeTypes = {
     customEdge: CustomEdge,
@@ -640,10 +644,15 @@ export const Workflow = () => {
                 {editingNodeId ? (<> Editing Node:{editingNodeId}</>) : (<> Normal Mode</>)}
             </Box>
             <Box height='50px' width='100vw'>
-                <Button onClick={toggleNodesLock} m={2}>
-                    {isNodesLocked ? '🔒' : '🔓'} {/* Kilit ikonu */}
-                </Button>
-                <Button
+                <IconButton
+                    icon={isNodesLocked ? <FaLock /> : <FaUnlock />}
+                    onClick={toggleNodesLock}
+                    m={2}
+                    aria-label={isNodesLocked ? 'Unlock Nodes' : 'Lock Nodes'}
+                    title={isNodesLocked ? 'Unlock Nodes' : 'Lock Nodes'}
+                />
+                <IconButton
+                    icon={<TbRefresh />}
                     onClick={() => {
                         setNodes([]);
                         setEdges([]);
@@ -653,12 +662,32 @@ export const Workflow = () => {
                         }, 0);
                     }}
                     m={2}
-                >
-                    Redraw
-                </Button>
+                    aria-label="Redraw"
+                    title="Redraw"
+                />
                 {editingNodeId === null && (
                     <>
-                        <Button onClick={exportWorkflow} m={2}>Export</Button>
+                        <IconButton
+                            icon={<FaUndo />}
+                            onClick={undo}
+                            m={2}
+                            aria-label="Undo"
+                            title="Undo"
+                        />
+                        <IconButton
+                            icon={<FaRedo />}
+                            onClick={redo}
+                            m={2}
+                            aria-label="Redo"
+                            title="Redo"
+                        />
+                        <IconButton
+                            icon={<TbDownload />}
+                            onClick={exportWorkflow}
+                            m={2}
+                            aria-label="Export"
+                            title="Export"
+                        />
                         <input
                             type="file"
                             accept=".json"
@@ -667,20 +696,81 @@ export const Workflow = () => {
                             id="import-file"
                         />
                         <label htmlFor="import-file">
-                            <Button as="span" m={2}>Import</Button>
+                            <IconButton
+                                as="span"
+                                icon={<TbUpload />}
+                                m={2}
+                                aria-label="Import"
+                                title="Import"
+                            />
                         </label>
-                        <Button onClick={exportToClipboard} m={2}>to Clipboard</Button>
-                        <Button onClick={importFromClipboard} m={2}>from Clipboard</Button>
-                        <Button onClick={toggleLanguage} m={2}>Lang {language}</Button>
-                        <Button onClick={newDiagram} m={2}>New</Button>
-                        <Button backgroundColor="#A3D8F4" onClick={addNewNode} m={2}>+Qstn</Button>
-                        <Button backgroundColor="#B9E2C8" onClick={addPauseNode} m={2}>+Pause</Button>
-                        <Button backgroundColor="#FFFACD" onClick={addCommandNode} m={2}>+Cmd</Button>
-                        <Button backgroundColor="#F4C1D9" onClick={addSwitchNode} m={2}>+Switch</Button>
-                        <Button onClick={undo} m={2}>Undo</Button>
-                        <Button onClick={redo} m={2}>Redo</Button>
-                        <Button onClick={duplicateSelectedNode} m={2}>Duplicate</Button>
-
+                        <IconButton
+                            icon={<TbClipboardCopy />}
+                            onClick={exportToClipboard}
+                            m={2}
+                            aria-label="Copy to Clipboard"
+                            title="Copy to Clipboard"
+                        />
+                        <IconButton
+                            icon={<FaPaste />}
+                            onClick={importFromClipboard}
+                            m={2}
+                            aria-label="Paste from Clipboard"
+                            title="Paste from Clipboard"
+                        />
+                        <IconButton
+                            icon={<GrLanguage />}
+                            onClick={toggleLanguage}
+                            m={2}
+                            aria-label={`Change Language (${language})`}
+                            title={`Change Language (${language})`}
+                        />
+                        <IconButton
+                            icon={<ImFileEmpty />}
+                            onClick={newDiagram}
+                            m={2}
+                            aria-label="New Diagram"
+                            title="New Diagram"
+                        />
+                        <IconButton
+                            icon={<FaQuestionCircle />}
+                            onClick={addNewNode}
+                            m={2}
+                            aria-label="Add Question Node"
+                            title="Add Question Node"
+                            backgroundColor="#A3D8F4"
+                        />
+                        <IconButton
+                            icon={<FaPause />}
+                            onClick={addPauseNode}
+                            m={2}
+                            aria-label="Add Pause Node"
+                            title="Add Pause Node"
+                            backgroundColor="#B9E2C8"
+                        />
+                        <IconButton
+                            icon={<FaTerminal />}
+                            onClick={addCommandNode}
+                            m={2}
+                            aria-label="Add Command Node"
+                            title="Add Command Node"
+                            backgroundColor="#FFFACD"
+                        />
+                        <IconButton
+                            icon={<FaExchangeAlt />}
+                            onClick={addSwitchNode}
+                            m={2}
+                            aria-label="Add Switch Node"
+                            title="Add Switch Node"
+                            backgroundColor="#F4C1D9"
+                        />
+                        <IconButton
+                            icon={<GrClone />}
+                            onClick={duplicateSelectedNode}
+                            m={2}
+                            aria-label="Duplicate"
+                            title="Duplicate"
+                        />
                     </>
                 )}
             </Box>

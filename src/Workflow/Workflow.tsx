@@ -14,7 +14,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Box, Button, IconButton } from '@chakra-ui/react';
-import { FaLock, FaUnlock, FaRedo, FaUndo, FaCopy, FaPaste, FaFileExport, FaFileImport, FaLanguage, FaPlus, FaQuestionCircle, FaPause, FaTerminal, FaExchangeAlt } from 'react-icons/fa';
+import { FaLock, FaUnlock, FaRedo, FaUndo, FaCopy, FaPaste, FaFileExport, FaFileImport, FaLanguage, FaPlus, FaQuestionCircle, FaPause, FaTerminal, FaExchangeAlt, FaSignOutAlt } from 'react-icons/fa';
 import { initialEdges, initialNodes } from './Workflow.constants';
 import './style.css';
 
@@ -47,7 +47,11 @@ const defaultNode = {
     data: { label: 'New Node' }
 };
 
-export const Workflow = () => {
+interface WorkflowProps {
+    onLogout?: () => void;
+}
+
+export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [history, setHistory] = useState([{ nodes: initialNodes, edges: initialEdges }]);
@@ -772,6 +776,18 @@ export const Workflow = () => {
                             title="Duplicate"
                         />
                     </>
+                )}
+                {onLogout && (
+                    <IconButton
+                        icon={<FaSignOutAlt />}
+                        onClick={onLogout}
+                        m={2}
+                        aria-label="Çıkış Yap"
+                        title="Çıkış Yap"
+                        colorScheme="red"
+                        variant="outline"
+                        style={{ marginLeft: 'auto' }}
+                    />
                 )}
             </Box>
             <ReactFlow

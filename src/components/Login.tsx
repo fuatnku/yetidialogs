@@ -10,6 +10,7 @@ import {
     useToast,
     Container,
     Center,
+    Checkbox,
 } from '@chakra-ui/react';
 
 interface LoginProps {
@@ -19,11 +20,15 @@ interface LoginProps {
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
     const toast = useToast();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (username === 'admin' && password === 'yeti12345') {
+            if (rememberMe) {
+                localStorage.setItem('isLoggedIn', 'true');
+            }
             onLogin();
         } else {
             toast({
@@ -60,6 +65,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                                         onChange={(e) => setPassword(e.target.value)}
                                     />
                                 </FormControl>
+                                <Checkbox 
+                                    isChecked={rememberMe} 
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                >
+                                    Beni Hatırla
+                                </Checkbox>
                                 <Button type="submit" colorScheme="blue" width="100%">
                                     Giriş Yap
                                 </Button>

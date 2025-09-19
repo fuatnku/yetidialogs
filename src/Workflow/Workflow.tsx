@@ -13,8 +13,8 @@ import ReactFlow, {
     OnSelectionChangeParams,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Box, Button, IconButton } from '@chakra-ui/react';
-import { FaLock, FaUnlock, FaRedo, FaUndo, FaCopy, FaPaste, FaFileExport, FaFileImport, FaLanguage, FaPlus, FaQuestionCircle, FaPause, FaTerminal, FaExchangeAlt, FaSignOutAlt } from 'react-icons/fa';
+import { Box, Button, IconButton, Textarea, VStack, HStack, Text, Divider } from '@chakra-ui/react';
+import { FaLock, FaUnlock, FaRedo, FaUndo, FaCopy, FaPaste, FaFileExport, FaFileImport, FaLanguage, FaPlus, FaQuestionCircle, FaPause, FaTerminal, FaExchangeAlt, FaSignOutAlt, FaFileAlt, FaTrash } from 'react-icons/fa';
 import { initialEdges, initialNodes } from './Workflow.constants';
 import './style.css';
 
@@ -54,7 +54,10 @@ interface WorkflowProps {
 export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-    const [history, setHistory] = useState([{ nodes: initialNodes, edges: initialEdges }]);
+    const [descriptions, setDescriptions] = useState<{en: string, tr: string}[]>([]);
+    const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
+    const [panelWidth, setPanelWidth] = useState(300);
+    const [history, setHistory] = useState([{ nodes: initialNodes, edges: initialEdges, descriptions: [] }]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
     const { language, toggleLanguage } = useLanguage(); // Use language from context
     const isUndoRedo = useRef(false); // Bayrak
@@ -69,10 +72,10 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
         setIsNodesLocked(prevState => !prevState);
     };
 
-    const applyChanges = (newNodes, newEdges) => {
+    const applyChanges = (newNodes, newEdges, newDescriptions = descriptions) => {
         if (isProgrammaticChange.current) return;
         const newHistory = history.slice(0, currentHistoryIndex + 1);
-        newHistory.push({ nodes: newNodes, edges: newEdges });
+        newHistory.push({ nodes: newNodes, edges: newEdges, descriptions: newDescriptions });
         setHistory(newHistory);
         setCurrentHistoryIndex(newHistory.length - 1);
     };
@@ -83,10 +86,12 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
 
         setNodes([]);
         setEdges([]);
+        setDescriptions([]);
 
         setTimeout(() => {
             setNodes(historyState.nodes);
             setEdges(historyState.edges);
+            setDescriptions(historyState.descriptions || []);
             isProgrammaticChange.current = false;
         }, 0);
     };
@@ -114,27 +119,31 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
 
         localStorage.setItem('workflowNodes', JSON.stringify(nodes));
         localStorage.setItem('workflowEdges', JSON.stringify(edges));
+        localStorage.setItem('workflowDescriptions', JSON.stringify(descriptions));
         console.log('Workflow saved to local storage');
 
         if (isUndoRedo.current) {
             isUndoRedo.current = false; // Undo veya Redo işlemi tamamlandı
             return;
         }
-    }, [nodes, edges]);
+    }, [nodes, edges, descriptions]);
 
 
     useEffect(() => {
         const loadedNodes = localStorage.getItem('workflowNodes');
         const loadedEdges = localStorage.getItem('workflowEdges');
+        const loadedDescriptions = localStorage.getItem('workflowDescriptions');
         if (loadedNodes && loadedEdges) {
             try {
                 const parsedNodes = JSON.parse(loadedNodes);
                 const parsedEdges = JSON.parse(loadedEdges);
+                const parsedDescriptions = loadedDescriptions ? JSON.parse(loadedDescriptions) : [];
                 isProgrammaticChange.current = true;
                 setNodes(parsedNodes);
                 setEdges(parsedEdges);
+                setDescriptions(parsedDescriptions);
                 isProgrammaticChange.current = false;
-                applyChanges(parsedNodes, parsedEdges);
+                applyChanges(parsedNodes, parsedEdges, parsedDescriptions);
                 console.log('Workflow loaded from local storage');
             } catch (error) {
                 console.error("Parsing error: ", error);
@@ -182,6 +191,13 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
     }, [nodes, setNodes, edges]);
 
     const exportWorkflow = useCallback(() => {
+        const exportData: any = {};
+        
+        // Add descriptions at the top
+        if (descriptions.length > 0) {
+            exportData.description = descriptions;
+        }
+        
         const nodeData = {};
         nodes.forEach(node => {
             const outgoingEdges = edges.filter(edge => edge.source === node.id);
@@ -229,7 +245,9 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
             }
         });
 
-        const data = JSON.stringify(nodeData, null, 2);
+        // Merge descriptions and node data
+        const finalData = { ...exportData, ...nodeData };
+        const data = JSON.stringify(finalData, null, 2);
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -237,9 +255,16 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
         link.download = 'workflow.json';
         link.click();
         link.remove();
-    }, [nodes, edges]);
+    }, [nodes, edges, descriptions]);
 
     const exportToClipboard = useCallback(() => {
+        const exportData: any = {};
+        
+        // Add descriptions at the top
+        if (descriptions.length > 0) {
+            exportData.description = descriptions;
+        }
+        
         const nodeData = {};
         nodes.forEach(node => {
             const outgoingEdges = edges.filter(edge => edge.source === node.id);
@@ -287,18 +312,31 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
             }
         });
 
-        const data = JSON.stringify(nodeData, null, 2);
+        // Merge descriptions and node data
+        const finalData = { ...exportData, ...nodeData };
+        const data = JSON.stringify(finalData, null, 2);
         navigator.clipboard.writeText(data).then(() => {
             console.log('Workflow copied to clipboard');
         }).catch(err => {
             console.error('Error copying workflow to clipboard: ', err);
         });
-    }, [nodes, edges]);
+    }, [nodes, edges, descriptions]);
 
     const importFromClipboard = useCallback(async () => {
         try {
             const text = await navigator.clipboard.readText();
             const data = JSON.parse(text);
+            
+            // Extract descriptions if they exist
+            let importedDescriptions = data.description || [];
+            // Convert old string format to new multi-language format if needed
+            if (importedDescriptions.length > 0 && typeof importedDescriptions[0] === 'string') {
+                importedDescriptions = importedDescriptions.map((desc: string) => ({
+                    en: desc,
+                    tr: desc
+                }));
+            }
+            delete data.description;
 
             const newNodes = Object.keys(data).map(key => {
                 let type = 'customNode'; // Varsayılan node tipi
@@ -381,8 +419,9 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
             isProgrammaticChange.current = true;
             setNodes(newNodes);
             setEdges(newEdges);
+            setDescriptions(importedDescriptions);
             isProgrammaticChange.current = false;
-            applyChanges(newNodes, newEdges);
+            applyChanges(newNodes, newEdges, importedDescriptions);
         } catch (error) {
             console.error("Clipboard parsing error: ", error);
         }
@@ -395,6 +434,17 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
+                    
+                    // Extract descriptions if they exist
+                    let importedDescriptions = data.description || [];
+                    // Convert old string format to new multi-language format if needed
+                    if (importedDescriptions.length > 0 && typeof importedDescriptions[0] === 'string') {
+                        importedDescriptions = importedDescriptions.map((desc: string) => ({
+                            en: desc,
+                            tr: desc
+                        }));
+                    }
+                    delete data.description;
                     const newNodes = Object.keys(data).map(key => {
                         let type = 'customNode'; // Varsayılan node tipi
 
@@ -476,8 +526,9 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
                     isProgrammaticChange.current = true;
                     setNodes(newNodes);
                     setEdges(newEdges);
+                    setDescriptions(importedDescriptions);
                     isProgrammaticChange.current = false;
-                    applyChanges(newNodes, newEdges);
+                    applyChanges(newNodes, newEdges, importedDescriptions);
                 } catch (error) {
                     console.error("File parsing error: ", error);
                 }
@@ -491,8 +542,9 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
             isProgrammaticChange.current = true;
             setNodes(initialNodes);
             setEdges(initialEdges);
+            setDescriptions([]);
             isProgrammaticChange.current = false;
-            applyChanges(initialNodes, initialEdges);
+            applyChanges(initialNodes, initialEdges, []);
         }
     }, [setNodes, setEdges, applyChanges]);
 
@@ -641,10 +693,126 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
         applyChanges(newNodes, edges);
     }, [nodes, setNodes, edges, applyChanges, editingNodeId, highlightedNodes]);
 
+    // Description functions
+    const addDescription = useCallback(() => {
+        const newDescriptions = [...descriptions, {en: "", tr: ""}];
+        setDescriptions(newDescriptions);
+        applyChanges(nodes, edges, newDescriptions);
+    }, [descriptions, nodes, edges]);
+
+    const updateDescription = useCallback((index: number, value: string) => {
+        const newDescriptions = [...descriptions];
+        newDescriptions[index] = {
+            ...newDescriptions[index],
+            [language]: value
+        };
+        setDescriptions(newDescriptions);
+        applyChanges(nodes, edges, newDescriptions);
+    }, [descriptions, nodes, edges, language]);
+
+    const deleteDescription = useCallback((index: number) => {
+        const newDescriptions = descriptions.filter((_, i) => i !== index);
+        setDescriptions(newDescriptions);
+        applyChanges(nodes, edges, newDescriptions);
+    }, [descriptions, nodes, edges]);
+
+    const handlePanelResize = useCallback((e: MouseEvent) => {
+        const newWidth = e.clientX;
+        if (newWidth >= 200 && newWidth <= 600) {
+            setPanelWidth(newWidth);
+        }
+    }, []);
+
+    const startResize = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        document.addEventListener('mousemove', handlePanelResize);
+        document.addEventListener('mouseup', () => {
+            document.removeEventListener('mousemove', handlePanelResize);
+        }, { once: true });
+    }, [handlePanelResize]);
+
     return (
-        <Box height='85vh' width='100vw'>
+        <Box height='85vh' width='100vw' position="relative">
+            {/* Description Panel */}
+            {isDescriptionPanelOpen && (
+                <Box
+                    position="absolute"
+                    left="0"
+                    top="74px"
+                    width={`${panelWidth}px`}
+                    height="calc(100% - 74px)"
+                    backgroundColor="white"
+                    borderRight="2px solid #e2e8f0"
+                    zIndex={1000}
+                    boxShadow="2px 0 10px rgba(0,0,0,0.1)"
+                >
+                    <VStack spacing={0} height="100%">
+                        <Box width="100%" p={3} borderBottom="1px solid #e2e8f0">
+                            <HStack justify="space-between" mb={2}>
+                                <VStack align="start" spacing={1}>
+                                    <Text fontWeight="bold" fontSize="md">Descriptions</Text>
+                                    <Text fontSize="xs" color="gray.600">Language: {language.toUpperCase()}</Text>
+                                </VStack>
+                                <IconButton
+                                    icon={<FaPlus />}
+                                    size="sm"
+                                    onClick={addDescription}
+                                    aria-label="Add Description"
+                                    title="Add Description"
+                                />
+                            </HStack>
+                        </Box>
+                        <Box flex="1" width="100%" overflowY="auto" p={3}>
+                            <VStack spacing={3} align="stretch">
+                                {descriptions.map((desc, index) => (
+                                    <Box key={index} position="relative">
+                                        <HStack align="flex-start" spacing={2}>
+                                            <Textarea
+                                                value={desc[language] || ""}
+                                                onChange={(e) => updateDescription(index, e.target.value)}
+                                                placeholder={`Description ${index + 1} (${language.toUpperCase()})`}
+                                                size="sm"
+                                                resize="vertical"
+                                                minHeight="60px"
+                                                flex="1"
+                                            />
+                                            <IconButton
+                                                icon={<FaTrash />}
+                                                size="sm"
+                                                colorScheme="red"
+                                                variant="ghost"
+                                                onClick={() => deleteDescription(index)}
+                                                aria-label="Delete Description"
+                                                title="Delete Description"
+                                            />
+                                        </HStack>
+                                    </Box>
+                                ))}
+                                {descriptions.length === 0 && (
+                                    <Text color="gray.500" textAlign="center" py={8}>
+                                        No descriptions yet. Click the + button to add one.
+                                    </Text>
+                                )}
+                            </VStack>
+                        </Box>
+                    </VStack>
+                    {/* Resize Handle */}
+                    <Box
+                        position="absolute"
+                        right="0"
+                        top="0"
+                        width="4px"
+                        height="100%"
+                        cursor="ew-resize"
+                        backgroundColor="transparent"
+                        _hover={{ backgroundColor: "#4A90E2" }}
+                        onMouseDown={startResize}
+                    />
+                </Box>
+            )}
+            
             <Box height='24px' width='100vw' background="gray" hidden={false}>
-                Undo {currentHistoryIndex} of {history.length - 1}( n:{nodes.length} e:{edges.length} )
+                Undo {currentHistoryIndex} of {history.length - 1}( n:{nodes.length} e:{edges.length} d:{descriptions.length} )
                 {editingNodeId ? (<> Editing Node:{editingNodeId}</>) : (<> Normal Mode</>)}
             </Box>
             <Box height='50px' width='100vw'>
@@ -775,6 +943,15 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
                             aria-label="Duplicate"
                             title="Duplicate"
                         />
+                        <IconButton
+                            icon={<FaFileAlt />}
+                            onClick={() => setIsDescriptionPanelOpen(!isDescriptionPanelOpen)}
+                            m={2}
+                            aria-label="Toggle Description Panel"
+                            title="Toggle Description Panel"
+                            backgroundColor={isDescriptionPanelOpen ? "#4A90E2" : undefined}
+                            color={isDescriptionPanelOpen ? "white" : undefined}
+                        />
                     </>
                 )}
                 {onLogout && (
@@ -790,41 +967,46 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
                     />
                 )}
             </Box>
-            <ReactFlow
-                nodes={nodes.map(node => ({
-                    ...node,
-                    data: {
-                        ...node.data,
-                        id: node.id,
-                        onChange: handleNodeChange,
-                        onDataChange: handleDataChange,
-                    },
-                    style: editingNodeId && node.id !== editingNodeId ? { opacity: 0.5, pointerEvents: 'none' } : {}, // Node stilini ayarlama
-                }))}
-                edges={edges.map(edge => ({
-                    ...edge,
-                    style: highlightedEdges.includes(edge) ? { strokeWidth: 3 } : {},
-                }))}
-                onNodesChange={onNodesChangeWrapper}
-                onEdgesChange={onEdgesChangeWrapper}
-                onConnect={onConnect}
-                onNodeDragStop={onNodeDragStop}
-                onSelectionChange={onSelectionChange}
-                nodeTypes={nodeTypes}
-                edgeTypes={edgeTypes}
-                snapToGrid
-                snapGrid={[20, 20]}
-                fitView
-                minZoom={0.1}
-                maxZoom={4}
-                zoomOnDoubleClick={false}
-//                selectionOnDrag={true}
-                nodesFocusable={!editingNodeId}
-                nodesDraggable={!editingNodeId}
-                panOnDrag={!editingNodeId}
-                preventScrolling={!editingNodeId}
-                nodesConnectable={!editingNodeId}
+            <Box
+                marginLeft={isDescriptionPanelOpen ? `${panelWidth}px` : "0"}
+                transition="margin-left 0.3s ease"
+                height="calc(100% - 74px)"
             >
+                <ReactFlow
+                    nodes={nodes.map(node => ({
+                        ...node,
+                        data: {
+                            ...node.data,
+                            id: node.id,
+                            onChange: handleNodeChange,
+                            onDataChange: handleDataChange,
+                        },
+                        style: editingNodeId && node.id !== editingNodeId ? { opacity: 0.5, pointerEvents: 'none' } : {}, // Node stilini ayarlama
+                    }))}
+                    edges={edges.map(edge => ({
+                        ...edge,
+                        style: highlightedEdges.includes(edge) ? { strokeWidth: 3 } : {},
+                    }))}
+                    onNodesChange={onNodesChangeWrapper}
+                    onEdgesChange={onEdgesChangeWrapper}
+                    onConnect={onConnect}
+                    onNodeDragStop={onNodeDragStop}
+                    onSelectionChange={onSelectionChange}
+                    nodeTypes={nodeTypes}
+                    edgeTypes={edgeTypes}
+                    snapToGrid
+                    snapGrid={[20, 20]}
+                    fitView
+                    minZoom={0.1}
+                    maxZoom={4}
+                    zoomOnDoubleClick={false}
+//                    selectionOnDrag={true}
+                    nodesFocusable={!editingNodeId}
+                    nodesDraggable={!editingNodeId}
+                    panOnDrag={!editingNodeId}
+                    preventScrolling={!editingNodeId}
+                    nodesConnectable={!editingNodeId}
+                >
                 <MiniMap
                     pannable
                     zoomable={true}
@@ -848,9 +1030,10 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
                         }
                     }}
                 />
-                <Background/>
-                <Controls/>
-            </ReactFlow>
+                    <Background/>
+                    <Controls/>
+                </ReactFlow>
+            </Box>
         </Box>
     );
 };

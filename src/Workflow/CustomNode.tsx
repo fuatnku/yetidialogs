@@ -24,7 +24,7 @@ interface CustomNodeComponentProps {
 }
 
 const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
-    const { language, toggleLanguage } = useLanguage(); // Use language from context
+    const { language } = useLanguage(); // Use language from context
     const [isSelected, setIsSelected] = useState(false);
 
     useOnSelectionChange({
@@ -126,7 +126,7 @@ const CustomNode: React.FC<CustomNodeComponentProps> = ({ id, data }) => {
     return (
         <div className={`custom-node ${isSelected ? 'selected' : ''}`}>
             <div className="node-header-custom">
-                <button onClick={toggleLanguage}>Question Node - {language.toUpperCase()}</button>
+                <span>Question Node - {language.toUpperCase()}</span>
                 <span className="node-id">ID: {id}</span>
             </div>
             <Handle

@@ -1,5 +1,47 @@
 # Changelog
 
+## v1.3.0 - 2025-09-19
+
+### Added
+- **Multi-Language System**: Complete overhaul of language management
+  - Language configuration panel with checkboxes for selecting active languages
+  - Support for 10 languages: Turkish, English, German, French, Spanish, Italian, Russian, Chinese, Japanese, Korean
+  - Flag-based language switcher in toolbar replacing single toggle button
+  - Languages array at top of JSON export/import files
+  - LocalStorage persistence for selected languages (default: TR, EN)
+- **Auto-Translation Placeholders**: When new languages are added, all existing nodes automatically get "Translate" placeholders
+- **Enhanced Language Configuration**: 
+  - Config button moved to right side of toolbar (gear icon only)
+  - Strengthened minimum one language selection requirement
+  - Visual warnings and disabled states for invalid configurations
+  - Bilingual UI texts (Turkish/English)
+
+### Changed
+- Replaced EN/TR toggle button with flag-based language selector
+- Removed language toggle from dialog node headers
+- Updated export/import system to include languages configuration
+- Enhanced LanguageContext with multi-language support and backward compatibility
+- Config button repositioned and simplified to gear icon only
+
+### Fixed
+- **Export Language Filtering**: Export now only includes selected languages in JSON output, removed languages are properly excluded
+
+### Technical Details
+- New `LanguageConfig` component for language management
+- Extended `LanguageContext` with `selectedLanguages` state
+- Updated JSON file structure with `languages` keyword
+- Automatic language configuration import/export
+- Maintained backward compatibility for existing workflows
+- Auto-translation system for newly added languages
+- Callback system for language updates to propagate to all nodes
+- Enhanced validation and safety checks for language selection
+- Language filtering in export functions (both file and clipboard export)
+- Filtered descriptions and node content to match selected languages only
+
+## Version 1.1.1 - 2025-09-19
+### Fixed
+- Fixed workflow area being cropped from the bottom by changing container height from 85vh to 100vh
+
 ## v1.2.0 - 2025-01-19
 
 ### Added

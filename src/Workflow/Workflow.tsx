@@ -25,8 +25,9 @@ import CustomNode from './CustomNode';
 import CustomEdge from './CustomEdge';
 import { useLanguage } from './LanguageContext'; // Import the useLanguage hook
 import { useEdit } from './EditContext';
+import LanguageConfig from './LanguageConfig';
 import {TbClipboardCopy, TbDownload, TbRefresh, TbUpload} from "react-icons/tb";
-import {GrClone, GrLanguage} from "react-icons/gr";
+import {GrClone} from "react-icons/gr";
 import {ImFileEmpty} from "react-icons/im";
 
 const edgeTypes = {
@@ -59,7 +60,7 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
     const [panelWidth, setPanelWidth] = useState(300);
     const [history, setHistory] = useState([{ nodes: initialNodes, edges: initialEdges, descriptions: [] }]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
-    const { language, toggleLanguage } = useLanguage(); // Use language from context
+    const { language, currentLanguage, selectedLanguages, switchToLanguage, availableLanguages, updateSelectedLanguages, registerLanguagesUpdateCallback } = useLanguage(); // Use language from context
     const isUndoRedo = useRef(false); // Bayrak
     const isProgrammaticChange = useRef(false); // Programatik değişiklik bayrağı
     const [isNodesLocked, setIsNodesLocked] = useState(false); // Node kilit durumu
@@ -126,7 +127,7 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
             isUndoRedo.current = false; // Undo veya Redo işlemi tamamlandı
             return;
         }
-    }, [nodes, edges, descriptions]);
+    }, [nodes, edges, descriptions, selectedLanguages]);
 
 
     useEffect(() => {
@@ -150,6 +151,13 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
             }
         }
     }, []);
+
+    // Register callback for new language additions
+    useEffect(() => {
+        registerLanguagesUpdateCallback((newLanguages) => {
+            updateNodesWithNewLanguages(newLanguages);
+        });
+    }, [nodes, descriptions]);
 
     const onConnect = useCallback((connection: Connection) => {
         const newEdge = {
@@ -193,9 +201,21 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
     const exportWorkflow = useCallback(() => {
         const exportData: any = {};
         
-        // Add descriptions at the top
+        // Add languages at the very top
+        exportData.languages = selectedLanguages;
+        
+        // Add descriptions (filtered to selected languages only)
         if (descriptions.length > 0) {
-            exportData.description = descriptions;
+            const filteredDescriptions = descriptions.map(desc => {
+                const filteredDesc = {};
+                selectedLanguages.forEach(lang => {
+                    if (desc[lang]) {
+                        filteredDesc[lang] = desc[lang];
+                    }
+                });
+                return filteredDesc;
+            });
+            exportData.description = filteredDescriptions;
         }
         
         const nodeData = {};
@@ -223,15 +243,35 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
                     nodeData[node.id] = { switches, position: node.position };
                     break;
                 case 'customNode':
+                    // Filter question object to only include selected languages
+                    const filteredQuestion = {};
+                    selectedLanguages.forEach(lang => {
+                        if (node.data.question && node.data.question[lang]) {
+                            filteredQuestion[lang] = node.data.question[lang];
+                        }
+                    });
+
+                    // Filter answers to only include selected languages
                     const answers = node.data.answers.map(answer => {
                         const connection = outgoingEdges.find(edge => edge.sourceHandle === answer.id);
-                        return { ...answer, connect: connection ? connection.target : null };
+                        const filteredText = {};
+                        selectedLanguages.forEach(lang => {
+                            if (answer.text && answer.text[lang]) {
+                                filteredText[lang] = answer.text[lang];
+                            }
+                        });
+                        return { 
+                            ...answer, 
+                            text: filteredText,
+                            connect: connection ? connection.target : null 
+                        };
                     });
+                    
                     const questionConnection = answers.length === 0
                         ? outgoingEdges.find(edge => edge.sourceHandle === "question-source-handle")?.target || null
                         : null;
                     nodeData[node.id] = {
-                        question: node.data.question,
+                        question: filteredQuestion,
                         answers,
                         isRandomOrder: node.data.isRandomOrder,
                         isIconNode: node.data.isIconNode,
@@ -255,14 +295,26 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
         link.download = 'workflow.json';
         link.click();
         link.remove();
-    }, [nodes, edges, descriptions]);
+    }, [nodes, edges, descriptions, selectedLanguages]);
 
     const exportToClipboard = useCallback(() => {
         const exportData: any = {};
         
-        // Add descriptions at the top
+        // Add languages at the very top
+        exportData.languages = selectedLanguages;
+        
+        // Add descriptions (filtered to selected languages only)
         if (descriptions.length > 0) {
-            exportData.description = descriptions;
+            const filteredDescriptions = descriptions.map(desc => {
+                const filteredDesc = {};
+                selectedLanguages.forEach(lang => {
+                    if (desc[lang]) {
+                        filteredDesc[lang] = desc[lang];
+                    }
+                });
+                return filteredDesc;
+            });
+            exportData.description = filteredDescriptions;
         }
         
         const nodeData = {};
@@ -290,15 +342,35 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
                     nodeData[node.id] = { switches, position: node.position };
                     break;
                 case 'customNode':
+                    // Filter question object to only include selected languages
+                    const filteredQuestion2 = {};
+                    selectedLanguages.forEach(lang => {
+                        if (node.data.question && node.data.question[lang]) {
+                            filteredQuestion2[lang] = node.data.question[lang];
+                        }
+                    });
+
+                    // Filter answers to only include selected languages
                     const answers = node.data.answers.map(answer => {
                         const connection = outgoingEdges.find(edge => edge.sourceHandle === answer.id);
-                        return { ...answer, connect: connection ? connection.target : null };
+                        const filteredText = {};
+                        selectedLanguages.forEach(lang => {
+                            if (answer.text && answer.text[lang]) {
+                                filteredText[lang] = answer.text[lang];
+                            }
+                        });
+                        return { 
+                            ...answer, 
+                            text: filteredText,
+                            connect: connection ? connection.target : null 
+                        };
                     });
+                    
                     const questionConnection = answers.length === 0
                         ? outgoingEdges.find(edge => edge.sourceHandle === "question-source-handle")?.target || null
                         : null;
                     nodeData[node.id] = {
-                        question: node.data.question,
+                        question: filteredQuestion2,
                         answers,
                         isRandomOrder: node.data.isRandomOrder,
                         isIconNode: node.data.isIconNode,
@@ -320,12 +392,18 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
         }).catch(err => {
             console.error('Error copying workflow to clipboard: ', err);
         });
-    }, [nodes, edges, descriptions]);
+    }, [nodes, edges, descriptions, selectedLanguages]);
 
     const importFromClipboard = useCallback(async () => {
         try {
             const text = await navigator.clipboard.readText();
             const data = JSON.parse(text);
+            
+            // Extract and update languages if they exist
+            if (data.languages && Array.isArray(data.languages)) {
+                updateSelectedLanguages(data.languages);
+            }
+            delete data.languages;
             
             // Extract descriptions if they exist
             let importedDescriptions = data.description || [];
@@ -425,7 +503,7 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
         } catch (error) {
             console.error("Clipboard parsing error: ", error);
         }
-    }, [setNodes, setEdges, applyChanges]);
+    }, [setNodes, setEdges, applyChanges, updateSelectedLanguages]);
 
     const importWorkflow = useCallback((event) => {
         const file = event.target.files[0];
@@ -434,6 +512,12 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
+                    
+                    // Extract and update languages if they exist
+                    if (data.languages && Array.isArray(data.languages)) {
+                        updateSelectedLanguages(data.languages);
+                    }
+                    delete data.languages;
                     
                     // Extract descriptions if they exist
                     let importedDescriptions = data.description || [];
@@ -535,7 +619,7 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
             };
             reader.readAsText(file);
         }
-    }, [setNodes, setEdges, applyChanges]);
+    }, [setNodes, setEdges, applyChanges, updateSelectedLanguages]);
 
     const newDiagram = useCallback(() => {
         if (window.confirm('Are you sure you want to start a new diagram? This will erase the current diagram.')) {
@@ -716,6 +800,62 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
         applyChanges(nodes, edges, newDescriptions);
     }, [descriptions, nodes, edges]);
 
+    // Function to update all nodes and descriptions with new languages
+    const updateNodesWithNewLanguages = useCallback((newLanguages) => {
+        // Update nodes
+        const updatedNodes = nodes.map(node => {
+            const updatedData = { ...node.data };
+            
+            if (node.type === 'customNode') {
+                // Update question object
+                if (updatedData.question) {
+                    newLanguages.forEach(lang => {
+                        if (!updatedData.question[lang]) {
+                            updatedData.question[lang] = updatedData.question[currentLanguage] || 'Translate';
+                        }
+                    });
+                }
+                
+                // Update answers array
+                if (updatedData.answers) {
+                    updatedData.answers = updatedData.answers.map(answer => ({
+                        ...answer,
+                        text: {
+                            ...answer.text,
+                            ...newLanguages.reduce((acc, lang) => {
+                                if (!answer.text[lang]) {
+                                    acc[lang] = answer.text[currentLanguage] || 'Translate';
+                                }
+                                return acc;
+                            }, {})
+                        }
+                    }));
+                }
+            }
+            
+            return { ...node, data: updatedData };
+        });
+        
+        // Update descriptions
+        const updatedDescriptions = descriptions.map(desc => ({
+            ...desc,
+            ...newLanguages.reduce((acc, lang) => {
+                if (!desc[lang]) {
+                    acc[lang] = desc[currentLanguage] || 'Translate';
+                }
+                return acc;
+            }, {})
+        }));
+        
+        isProgrammaticChange.current = true;
+        setNodes(updatedNodes);
+        setDescriptions(updatedDescriptions);
+        isProgrammaticChange.current = false;
+        applyChanges(updatedNodes, edges, updatedDescriptions);
+        
+        console.log(`Added translation placeholders for new languages: ${newLanguages.join(', ')}`);
+    }, [nodes, descriptions, edges, currentLanguage]);
+
     const handlePanelResize = useCallback((e: MouseEvent) => {
         const newWidth = e.clientX;
         if (newWidth >= 200 && newWidth <= 600) {
@@ -732,7 +872,7 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
     }, [handlePanelResize]);
 
     return (
-        <Box height='85vh' width='100vw' position="relative">
+        <Box height='100vh' width='100vw' position="relative">
             {/* Description Panel */}
             {isDescriptionPanelOpen && (
                 <Box
@@ -815,7 +955,7 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
                 Undo {currentHistoryIndex} of {history.length - 1}( n:{nodes.length} e:{edges.length} d:{descriptions.length} )
                 {editingNodeId ? (<> Editing Node:{editingNodeId}</>) : (<> Normal Mode</>)}
             </Box>
-            <Box height='50px' width='100vw'>
+            <Box height='50px' width='100vw' display="flex" alignItems="center" justifyContent="space-between" flexWrap="nowrap" overflowX="auto">
                 <IconButton
                     icon={isNodesLocked ? <FaLock /> : <FaUnlock />}
                     onClick={toggleNodesLock}
@@ -838,7 +978,7 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
                     title="Redraw"
                 />
                 {editingNodeId === null && (
-                    <>
+                    <HStack spacing={1} flexWrap="nowrap" overflowX="auto" flex="1">
                         <IconButton
                             icon={<FaUndo />}
                             onClick={undo}
@@ -890,13 +1030,20 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
                             aria-label="Paste from Clipboard"
                             title="Paste from Clipboard"
                         />
-                        <IconButton
-                            icon={<GrLanguage />}
-                            onClick={toggleLanguage}
-                            m={2}
-                            aria-label={`Change Language (${language})`}
-                            title={`Change Language (${language})`}
-                        />
+                        {selectedLanguages.map((langCode) => (
+                            <IconButton
+                                key={langCode}
+                                icon={<span>{availableLanguages[langCode]?.flag || langCode.toUpperCase()}</span>}
+                                size="sm"
+                                variant={currentLanguage === langCode ? "solid" : "outline"}
+                                colorScheme={currentLanguage === langCode ? "blue" : "gray"}
+                                onClick={() => switchToLanguage(langCode)}
+                                title={availableLanguages[langCode]?.name || langCode}
+                                aria-label={`Switch to ${availableLanguages[langCode]?.name || langCode}`}
+                                m={1}
+                                fontSize="lg"
+                            />
+                        ))}
                         <IconButton
                             icon={<ImFileEmpty />}
                             onClick={newDiagram}
@@ -952,20 +1099,22 @@ export const Workflow = ({ onLogout }: WorkflowProps = {}) => {
                             backgroundColor={isDescriptionPanelOpen ? "#4A90E2" : undefined}
                             color={isDescriptionPanelOpen ? "white" : undefined}
                         />
-                    </>
+                    </HStack>
                 )}
-                {onLogout && (
-                    <IconButton
-                        icon={<FaSignOutAlt />}
-                        onClick={onLogout}
-                        m={2}
-                        aria-label="Çıkış Yap"
-                        title="Çıkış Yap"
-                        colorScheme="red"
-                        variant="outline"
-                        style={{ marginLeft: 'auto' }}
-                    />
-                )}
+                <HStack spacing={2} flexShrink={0}>
+                    <LanguageConfig />
+                    {onLogout && (
+                        <IconButton
+                            icon={<FaSignOutAlt />}
+                            onClick={onLogout}
+                            aria-label="Çıkış Yap"
+                            title="Çıkış Yap"
+                            colorScheme="red"
+                            variant="outline"
+                            size="sm"
+                        />
+                    )}
+                </HStack>
             </Box>
             <Box
                 marginLeft={isDescriptionPanelOpen ? `${panelWidth}px` : "0"}
